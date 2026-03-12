@@ -1,7 +1,11 @@
 import streamlit as st
 from docxtpl import DocxTemplate
 import tempfile
+import os
 import pypandoc
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+template_path = os.path.join(BASE_DIR, "contract_template.docx")
 
 st.set_page_config(page_title="Gerador de Contrato", page_icon="📄")
 
@@ -56,7 +60,7 @@ with st.form("formulario_contrato"):
 
 if submit:
 
-    doc = DocxTemplate("contract_template.docx")
+    doc = DocxTemplate(template_path)
 
     context = {
         "contractor_name": contractor_name,
