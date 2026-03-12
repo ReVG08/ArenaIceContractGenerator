@@ -2,7 +2,6 @@ import streamlit as st
 from docxtpl import DocxTemplate
 import tempfile
 import os
-import pypandoc
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 template_path = os.path.join(BASE_DIR, "contract_template.docx")
@@ -47,8 +46,7 @@ with st.form("formulario_contrato"):
 
     payment_terms = st.text_area(
         "Descreva as condições de pagamento",
-        height=200,
-        placeholder="Exemplo: 50% de entrada via PIX na assinatura do contrato e 50% restantes até 3 dias antes do evento."
+        height=200
     )
 
     st.header("Assinatura")
@@ -87,15 +85,13 @@ if submit:
     tmp_docx = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
     doc.save(tmp_docx.name)
 
-    pdf_path = tmp_docx.name.replace(".docx", ".pdf")
+    with open(tmp_docx.name, "rb") as f:
 
-    pypandoc.convert_file(tmp_docx.name, "pdf", outputfile=pdf_path)
-
-    with open(pdf_path, "rb") as f:
         st.success("Contrato gerado!")
 
         st.download_button(
-            "Baixar PDF",
+            "Baixar contrato",
             f,
-            file_name="contrato_evento.pdf"
+            file_name="contrato_evento.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
