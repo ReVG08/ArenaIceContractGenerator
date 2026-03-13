@@ -30,6 +30,9 @@ with st.form("formulario_contrato"):
 
     guest_count = st.number_input("Número máximo de convidados", step=1)
     skaters_count = st.number_input("Número de pessoas para patinar", step=1)
+    first = st.text_input("Horario primeira atividade")
+    second = st.text_input("Horario segunda atividade")
+    third = st.text_input("Horario terceira atividade")
 
     rink_name = st.text_input("Nome da pista")
 
@@ -78,6 +81,9 @@ if submit:
         "payment_terms": payment_terms,
         "signature_day": signature_day,
         "signature_month": signature_month
+        "first": first
+        "second": second
+        "third": third
     }
 
     doc.render(context)
