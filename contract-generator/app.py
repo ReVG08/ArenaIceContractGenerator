@@ -4,204 +4,160 @@ import tempfile
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-template_path = os.path.join(BASE_DIR, "contract_template.docx")
 
-st.set_page_config(
-    page_title="Gerador de Contrato",
-    page_icon="📄",
-    layout="wide"
+big_template = os.path.join(BASE_DIR, "contract_template.docx")
+pocket_template = os.path.join(BASE_DIR, "pocket_template.docx")
+
+st.set_page_config(page_title="Gerador de Contrato", page_icon="📄")
+
+st.title("Gerador de Contratos - Arena Ice")
+
+contract_type = st.radio(
+    "Escolha o tipo de contrato",
+    ["Evento Formal", "Pocket Event"]
 )
 
-st.title("📄 Gerador de Contrato de Evento")
-st.caption("Preencha as informações abaixo para gerar automaticamente o contrato.")
+# =========================
+# BIG EVENT CONTRACT
+# =========================
 
-with st.form("formulario_contrato"):
+if contract_type == "Evento Grande":
 
-    st.divider()
-    st.subheader("👤 Dados do Contratante")
+    with st.form("big_contract"):
 
-    col1, col2, col3 = st.columns(3)
+        st.header("Dados do Contratante")
 
-    with col1:
-        contractor_name = st.text_input(
-            "Nome do contratante",
-            placeholder="Ex: João da Silva"
-        )
+        contractor_name = st.text_input("Nome do contratante")
+        contractor_cpf = st.text_input("CPF")
+        contractor_birthdate = st.text_input("Data de nascimento")
 
-    with col2:
-        contractor_cpf = st.text_input(
-            "CPF",
-            placeholder="000.000.000-00"
-        )
+        st.header("Informações do Evento")
 
-    with col3:
-        contractor_birthdate = st.text_input(
-            "Data de nascimento",
-            placeholder="DD/MM/AAAA"
-        )
+        event_name = st.text_input("Nome do evento", value="ANIVERSÁRIO")
+        event_date = st.text_input("Data do evento")
+        event_weekday = st.text_input("Dia da semana")
 
-    st.divider()
-    st.subheader("🎉 Informações do Evento")
+        event_duration_hours = st.text_input("Duração do evento (horas)")
+        event_start_time = st.text_input("Horário de início")
+        event_end_time = st.text_input("Horário de término")
 
-    col1, col2, col3 = st.columns(3)
+        guest_count = st.number_input("Número máximo de convidados", step=1)
+        skaters_count = st.number_input("Número de pessoas para patinar", step=1)
 
-    with col1:
-        event_name = st.text_input(
-            "Nome do evento",
-            value="ANIVERSÁRIO"
-        )
+        first = st.text_input("Horário primeira atividade")
+        second = st.text_input("Horário segunda atividade")
+        third = st.text_input("Horário terceira atividade")
 
-    with col2:
-        event_date = st.text_input(
-            "Data do evento",
-            placeholder="DD/MM/AAAA"
-        )
+        rink_name = st.text_input("Nome da pista")
 
-    with col3:
-        event_weekday = st.text_input(
-            "Dia da semana",
-            placeholder="Ex: Sábado"
-        )
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        event_duration_hours = st.text_input(
-            "Duração do evento (horas)",
-            placeholder="Ex: 3"
-        )
-
-    with col2:
-        event_start_time = st.text_input(
-            "Horário de início",
-            placeholder="Ex: 14:00"
-        )
-
-    with col3:
-        event_end_time = st.text_input(
-            "Horário de término",
-            placeholder="Ex: 17:00"
-        )
-
-    st.divider()
-    st.subheader("⛸️ Participantes e Atividades")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        guest_count = st.number_input(
-            "Número máximo de convidados",
-            step=1
-        )
-
-        skaters_count = st.number_input(
-            "Número de pessoas para patinar",
-            step=1
-        )
-
-        rink_name = st.text_input(
-            "Nome da pista",
-            placeholder="Ex: Pista Central"
-        )
-
-    with col2:
         tipo_espaco = st.selectbox(
             "Tipo de espaço",
             ["Espaço exclusivo", "Arena compartilhada"]
         )
 
-        first = st.text_input(
-            "Horário primeira atividade",
-            placeholder="Ex: 14:30"
-        )
+        st.header("Valores")
 
-        second = st.text_input(
-            "Horário segunda atividade",
-            placeholder="Ex: 15:30"
-        )
+        contract_total_value = st.number_input("Valor total do contrato (R$)")
 
-        third = st.text_input(
-            "Horário terceira atividade",
-            placeholder="Ex: 16:30"
-        )
+        payment_terms = st.text_area("Condições de pagamento")
 
-    st.divider()
-    st.subheader("💰 Valores")
+        signature_day = st.text_input("Dia da assinatura")
+        signature_month = st.text_input("Mês da assinatura")
 
-    contract_total_value = st.number_input(
-        "Valor total do contrato (R$)",
-        step=100
-    )
+        submit = st.form_submit_button("Gerar contrato")
 
-    st.divider()
-    st.subheader("💳 Condições de Pagamento")
+    if submit:
 
-    payment_terms = st.text_area(
-        "Descreva as condições de pagamento",
-        height=150,
-        placeholder="Ex: 50% na assinatura e 50% até o dia do evento."
-    )
+        doc = DocxTemplate(big_template)
 
-    st.divider()
-    st.subheader("✍️ Assinatura")
+        context = {
+            "contractor_name": contractor_name,
+            "contractor_cpf": contractor_cpf,
+            "contractor_birthdate": contractor_birthdate,
+            "event_name": event_name,
+            "event_date": event_date,
+            "event_weekday": event_weekday,
+            "event_duration_hours": event_duration_hours,
+            "event_start_time": event_start_time,
+            "event_end_time": event_end_time,
+            "guest_count": guest_count,
+            "skaters_count": skaters_count,
+            "rink_name": rink_name,
+            "tipo_espaco": tipo_espaco,
+            "contract_total_value": contract_total_value,
+            "payment_terms": payment_terms,
+            "signature_day": signature_day,
+            "signature_month": signature_month,
+            "first": first,
+            "second": second,
+            "third": third
+        }
 
-    col1, col2 = st.columns(2)
+        doc.render(context)
 
-    with col1:
-        signature_day = st.text_input(
-            "Dia da assinatura",
-            placeholder="Ex: 15"
-        )
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
+        doc.save(tmp.name)
 
-    with col2:
-        signature_month = st.text_input(
-            "Mês da assinatura",
-            placeholder="Ex: Março"
-        )
+        with open(tmp.name, "rb") as f:
 
-    st.divider()
+            st.download_button(
+                "Baixar contrato",
+                f,
+                file_name="contrato_evento.docx"
+            )
 
-    submit = st.form_submit_button("📄 Gerar contrato")
+# =========================
+# POCKET EVENT CONTRACT
+# =========================
 
-if submit:
+else:
 
-    doc = DocxTemplate(template_path)
+    with st.form("pocket_contract"):
 
-    context = {
-        "contractor_name": contractor_name,
-        "contractor_cpf": contractor_cpf,
-        "contractor_birthdate": contractor_birthdate,
-        "event_name": event_name,
-        "event_date": event_date,
-        "event_weekday": event_weekday,
-        "event_duration_hours": event_duration_hours,
-        "event_start_time": event_start_time,
-        "event_end_time": event_end_time,
-        "guest_count": guest_count,
-        "skaters_count": skaters_count,
-        "rink_name": rink_name,
-        "tipo_espaco": tipo_espaco,
-        "contract_total_value": contract_total_value,
-        "payment_terms": payment_terms,
-        "signature_day": signature_day,
-        "signature_month": signature_month,
-        "first": first,
-        "second": second,
-        "third": third
-    }
+        contractor_name = st.text_input("Nome do contratante")
+        contractor_cpf = st.text_input("CPF")
 
-    doc.render(context)
+        birthday_person = st.text_input("Nome do aniversariante")
+        birthday_age = st.number_input("Idade", step=1)
 
-    tmp_docx = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
-    doc.save(tmp_docx.name)
+        event_date = st.text_input("Data do evento")
 
-    with open(tmp_docx.name, "rb") as f:
+        start_time = st.text_input("Horário de início")
+        end_time = st.text_input("Horário de término")
 
-        st.success("✅ Contrato gerado com sucesso!")
+        contract_value = st.number_input("Valor do contrato (R$)")
 
-        st.download_button(
-            "⬇️ Baixar contrato",
-            f,
-            file_name="contrato_evento.docx",
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        )
+        payment_method = st.text_input("Forma de pagamento")
+        payment_date = st.text_input("Data do pagamento")
+
+        submit = st.form_submit_button("Gerar contrato")
+
+    if submit:
+
+        doc = DocxTemplate(pocket_template)
+
+        context = {
+            "contractor_name": contractor_name,
+            "contractor_cpf": contractor_cpf,
+            "birthday_person": birthday_person,
+            "birthday_age": birthday_age,
+            "event_date": event_date,
+            "start_time": start_time,
+            "end_time": end_time,
+            "contract_value": contract_value,
+            "payment_method": payment_method,
+            "payment_date": payment_date
+        }
+
+        doc.render(context)
+
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
+        doc.save(tmp.name)
+
+        with open(tmp.name, "rb") as f:
+
+            st.download_button(
+                "Baixar contrato",
+                f,
+                file_name="contrato_pocket_event.docx"
+            )
