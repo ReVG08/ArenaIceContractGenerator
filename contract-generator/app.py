@@ -80,9 +80,9 @@ if submit:
         "contract_total_value": contract_total_value,
         "payment_terms": payment_terms,
         "signature_day": signature_day,
-        "signature_month": signature_month
-        "first": first
-        "second": second
+        "signature_month": signature_month,
+        "first": first,
+        "second": second,
         "third": third
     }
 
