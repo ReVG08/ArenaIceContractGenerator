@@ -8,45 +8,83 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 big_template = os.path.join(BASE_DIR, "contract_template.docx")
 pocket_template = os.path.join(BASE_DIR, "pocket_template.docx")
 
-st.set_page_config(page_title="Gerador de Contrato", page_icon="📄")
+st.set_page_config(page_title="Gerador de Contratos", page_icon="📄")
 
-st.title("Gerador de Contratos - Arena Ice")
+st.title("📄 Gerador de Contratos - Arena Ice")
+
+st.markdown("Selecione o tipo de contrato para gerar.")
 
 contract_type = st.radio(
-    "Escolha o tipo de contrato",
-    ["Evento Formal", "Pocket Event"]
+    "Tipo de evento",
+    ["Evento Grande", "Pocket Event"],
+    horizontal=True
 )
 
-# =========================
+# =====================================================
 # BIG EVENT CONTRACT
-# =========================
+# =====================================================
 
-if contract_type == "Evento Grande":
+def big_event_form():
 
     with st.form("big_contract"):
 
         st.header("Dados do Contratante")
 
-        contractor_name = st.text_input("Nome do contratante")
-        contractor_cpf = st.text_input("CPF")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            contractor_name = st.text_input("Nome do contratante")
+
+        with col2:
+            contractor_cpf = st.text_input("CPF")
+
         contractor_birthdate = st.text_input("Data de nascimento")
 
         st.header("Informações do Evento")
 
         event_name = st.text_input("Nome do evento", value="ANIVERSÁRIO")
-        event_date = st.text_input("Data do evento")
-        event_weekday = st.text_input("Dia da semana")
 
-        event_duration_hours = st.text_input("Duração do evento (horas)")
-        event_start_time = st.text_input("Horário de início")
-        event_end_time = st.text_input("Horário de término")
+        col3, col4 = st.columns(2)
 
-        guest_count = st.number_input("Número máximo de convidados", step=1)
-        skaters_count = st.number_input("Número de pessoas para patinar", step=1)
+        with col3:
+            event_date = st.text_input("Data do evento")
 
-        first = st.text_input("Horário primeira atividade")
-        second = st.text_input("Horário segunda atividade")
-        third = st.text_input("Horário terceira atividade")
+        with col4:
+            event_weekday = st.text_input("Dia da semana")
+
+        col5, col6, col7 = st.columns(3)
+
+        with col5:
+            event_duration_hours = st.text_input("Duração (horas)")
+
+        with col6:
+            event_start_time = st.text_input("Horário início")
+
+        with col7:
+            event_end_time = st.text_input("Horário término")
+
+        st.header("Capacidade")
+
+        col8, col9 = st.columns(2)
+
+        with col8:
+            guest_count = st.number_input("Máximo de convidados", step=1)
+
+        with col9:
+            skaters_count = st.number_input("Pessoas para patinar", step=1)
+
+        st.header("Programação")
+
+        col10, col11, col12 = st.columns(3)
+
+        with col10:
+            first = st.text_input("1ª atividade")
+
+        with col11:
+            second = st.text_input("2ª atividade")
+
+        with col12:
+            third = st.text_input("3ª atividade")
 
         rink_name = st.text_input("Nome da pista")
 
@@ -57,12 +95,19 @@ if contract_type == "Evento Grande":
 
         st.header("Valores")
 
-        contract_total_value = st.number_input("Valor total do contrato (R$)")
+        contract_total_value = st.number_input("Valor total (R$)")
 
         payment_terms = st.text_area("Condições de pagamento")
 
-        signature_day = st.text_input("Dia da assinatura")
-        signature_month = st.text_input("Mês da assinatura")
+        st.header("Assinatura")
+
+        col13, col14 = st.columns(2)
+
+        with col13:
+            signature_day = st.text_input("Dia")
+
+        with col14:
+            signature_month = st.text_input("Mês")
 
         submit = st.form_submit_button("Gerar contrato")
 
@@ -100,32 +145,48 @@ if contract_type == "Evento Grande":
 
         with open(tmp.name, "rb") as f:
 
+            st.success("Contrato gerado!")
+
             st.download_button(
-                "Baixar contrato",
+                "📥 Baixar contrato",
                 f,
-                file_name="contrato_evento.docx"
+                file_name="contrato_evento_grande.docx"
             )
 
-# =========================
-# POCKET EVENT CONTRACT
-# =========================
 
-else:
+# =====================================================
+# POCKET EVENT CONTRACT
+# =====================================================
+
+def pocket_event_form():
 
     with st.form("pocket_contract"):
+
+        st.header("Dados do Contratante")
 
         contractor_name = st.text_input("Nome do contratante")
         contractor_cpf = st.text_input("CPF")
 
+        st.header("Aniversário")
+
         birthday_person = st.text_input("Nome do aniversariante")
         birthday_age = st.number_input("Idade", step=1)
 
+        st.header("Evento")
+
         event_date = st.text_input("Data do evento")
 
-        start_time = st.text_input("Horário de início")
-        end_time = st.text_input("Horário de término")
+        col1, col2 = st.columns(2)
 
-        contract_value = st.number_input("Valor do contrato (R$)")
+        with col1:
+            start_time = st.text_input("Horário início")
+
+        with col2:
+            end_time = st.text_input("Horário término")
+
+        st.header("Pagamento")
+
+        contract_value = st.number_input("Valor (R$)")
 
         payment_method = st.text_input("Forma de pagamento")
         payment_date = st.text_input("Data do pagamento")
@@ -156,8 +217,21 @@ else:
 
         with open(tmp.name, "rb") as f:
 
+            st.success("Contrato gerado!")
+
             st.download_button(
-                "Baixar contrato",
+                "📥 Baixar contrato",
                 f,
                 file_name="contrato_pocket_event.docx"
             )
+
+
+# =====================================================
+# SWITCH UI
+# =====================================================
+
+if contract_type == "Evento Grande":
+    big_event_form()
+
+else:
+    pocket_event_form()
