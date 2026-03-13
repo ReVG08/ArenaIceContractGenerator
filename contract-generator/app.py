@@ -6,58 +6,162 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 template_path = os.path.join(BASE_DIR, "contract_template.docx")
 
-st.set_page_config(page_title="Gerador de Contrato", page_icon="📄")
+st.set_page_config(
+    page_title="Gerador de Contrato",
+    page_icon="📄",
+    layout="wide"
+)
 
-st.title("Gerador de Contrato de Evento")
+st.title("📄 Gerador de Contrato de Evento")
+st.caption("Preencha as informações abaixo para gerar automaticamente o contrato.")
 
 with st.form("formulario_contrato"):
 
-    st.header("Dados do Contratante")
+    st.divider()
+    st.subheader("👤 Dados do Contratante")
 
-    contractor_name = st.text_input("Nome do contratante")
-    contractor_cpf = st.text_input("CPF")
-    contractor_birthdate = st.text_input("Data de nascimento")
+    col1, col2, col3 = st.columns(3)
 
-    st.header("Informações do Evento")
+    with col1:
+        contractor_name = st.text_input(
+            "Nome do contratante",
+            placeholder="Ex: João da Silva"
+        )
 
-    event_name = st.text_input("Nome do evento", value="ANIVERSÁRIO")
-    event_date = st.text_input("Data do evento")
-    event_weekday = st.text_input("Dia da semana")
+    with col2:
+        contractor_cpf = st.text_input(
+            "CPF",
+            placeholder="000.000.000-00"
+        )
 
-    event_duration_hours = st.text_input("Duração do evento (horas)")
-    event_start_time = st.text_input("Horário de início")
-    event_end_time = st.text_input("Horário de término")
+    with col3:
+        contractor_birthdate = st.text_input(
+            "Data de nascimento",
+            placeholder="DD/MM/AAAA"
+        )
 
-    guest_count = st.number_input("Número máximo de convidados", step=1)
-    skaters_count = st.number_input("Número de pessoas para patinar", step=1)
-    first = st.text_input("Horario primeira atividade")
-    second = st.text_input("Horario segunda atividade")
-    third = st.text_input("Horario terceira atividade")
+    st.divider()
+    st.subheader("🎉 Informações do Evento")
 
-    rink_name = st.text_input("Nome da pista")
+    col1, col2, col3 = st.columns(3)
 
-    tipo_espaco = st.selectbox(
-        "Tipo de espaço",
-        ["Espaço exclusivo", "Arena compartilhada"]
+    with col1:
+        event_name = st.text_input(
+            "Nome do evento",
+            value="ANIVERSÁRIO"
+        )
+
+    with col2:
+        event_date = st.text_input(
+            "Data do evento",
+            placeholder="DD/MM/AAAA"
+        )
+
+    with col3:
+        event_weekday = st.text_input(
+            "Dia da semana",
+            placeholder="Ex: Sábado"
+        )
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        event_duration_hours = st.text_input(
+            "Duração do evento (horas)",
+            placeholder="Ex: 3"
+        )
+
+    with col2:
+        event_start_time = st.text_input(
+            "Horário de início",
+            placeholder="Ex: 14:00"
+        )
+
+    with col3:
+        event_end_time = st.text_input(
+            "Horário de término",
+            placeholder="Ex: 17:00"
+        )
+
+    st.divider()
+    st.subheader("⛸️ Participantes e Atividades")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        guest_count = st.number_input(
+            "Número máximo de convidados",
+            step=1
+        )
+
+        skaters_count = st.number_input(
+            "Número de pessoas para patinar",
+            step=1
+        )
+
+        rink_name = st.text_input(
+            "Nome da pista",
+            placeholder="Ex: Pista Central"
+        )
+
+    with col2:
+        tipo_espaco = st.selectbox(
+            "Tipo de espaço",
+            ["Espaço exclusivo", "Arena compartilhada"]
+        )
+
+        first = st.text_input(
+            "Horário primeira atividade",
+            placeholder="Ex: 14:30"
+        )
+
+        second = st.text_input(
+            "Horário segunda atividade",
+            placeholder="Ex: 15:30"
+        )
+
+        third = st.text_input(
+            "Horário terceira atividade",
+            placeholder="Ex: 16:30"
+        )
+
+    st.divider()
+    st.subheader("💰 Valores")
+
+    contract_total_value = st.number_input(
+        "Valor total do contrato (R$)",
+        step=100
     )
 
-    st.header("Valores")
-
-    contract_total_value = st.number_input("Valor total do contrato (R$)")
-
-    st.header("Condições de Pagamento")
+    st.divider()
+    st.subheader("💳 Condições de Pagamento")
 
     payment_terms = st.text_area(
         "Descreva as condições de pagamento",
-        height=200
+        height=150,
+        placeholder="Ex: 50% na assinatura e 50% até o dia do evento."
     )
 
-    st.header("Assinatura")
+    st.divider()
+    st.subheader("✍️ Assinatura")
 
-    signature_day = st.text_input("Dia da assinatura")
-    signature_month = st.text_input("Mês da assinatura")
+    col1, col2 = st.columns(2)
 
-    submit = st.form_submit_button("Gerar contrato")
+    with col1:
+        signature_day = st.text_input(
+            "Dia da assinatura",
+            placeholder="Ex: 15"
+        )
+
+    with col2:
+        signature_month = st.text_input(
+            "Mês da assinatura",
+            placeholder="Ex: Março"
+        )
+
+    st.divider()
+
+    submit = st.form_submit_button("📄 Gerar contrato")
 
 if submit:
 
@@ -93,10 +197,10 @@ if submit:
 
     with open(tmp_docx.name, "rb") as f:
 
-        st.success("Contrato gerado!")
+        st.success("✅ Contrato gerado com sucesso!")
 
         st.download_button(
-            "Baixar contrato",
+            "⬇️ Baixar contrato",
             f,
             file_name="contrato_evento.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
