@@ -242,17 +242,17 @@ if st.session_state.contract_type == "big":
         with col12:
             first = st.text_input(
                 "1ª atividade *",
-                placeholder="Ex: 14:30 - Entrada na pista",
+                placeholder="Ex: 14:30",
             )
         with col13:
             second = st.text_input(
                 "2ª atividade *",
-                placeholder="Ex: 15:30 - Corte do bolo",
+                placeholder="Ex: 15:30",
             )
         with col14:
             third = st.text_input(
                 "3ª atividade *",
-                placeholder="Ex: 16:30 - Encerramento",
+                placeholder="Ex: 16:30",
             )
 
         st.subheader("🏟️ Arena")
