@@ -218,6 +218,50 @@ label, .stTextInput label, .stNumberInput label,
 /* ── Divider ── */
 hr { border-color: rgba(96,165,250,0.12) !important; }
  
+/* ── Sticky footer ── */
+.sticky-footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 999;
+    background: linear-gradient(90deg, #060d1f 0%, #0b1a3a 100%);
+    border-top: 1px solid rgba(96,165,250,0.12);
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.sticky-footer img {
+    height: 36px;
+    opacity: 0.85;
+}
+.sticky-footer-text {
+    font-family: 'Sora', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #3a5a8a;
+}
+.footer-sair-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(96,165,250,0.2);
+    border-radius: 8px;
+    color: #7bafd4;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 7px 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+.footer-sair-btn:hover {
+    background: rgba(96,165,250,0.1);
+    border-color: rgba(96,165,250,0.4);
+    color: #e8f0fe;
+}
+/* Push content above footer */
+.block-container { padding-bottom: 80px !important; }
+ 
 /* ── Caption / small text ── */
 .stCaption, small { color: #4a6a9a !important; }
  
@@ -225,14 +269,10 @@ hr { border-color: rgba(96,165,250,0.12) !important; }
 .stSpinner > div { border-top-color: #1d6aff !important; }
  
 /* ── Section card ── */
-.section-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(96,165,250,0.1);
-    border-radius: 16px;
-    padding: 24px 28px 8px 28px;
-    margin-bottom: 20px;
-}
 .section-label {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(96,165,250,0.1);
     font-family: 'Sora', sans-serif;
     font-size: 0.7rem;
     font-weight: 700;
@@ -262,33 +302,21 @@ hr { border-color: rgba(96,165,250,0.12) !important; }
 # SIDEBAR
 # ─────────────────────────────────────────────
  
-with st.sidebar:
+# ─────────────────────────────────────────────
+# STICKY FOOTER
+# ─────────────────────────────────────────────
+ 
+def render_footer():
     if LOGO_B64:
-        st.markdown(f"""
-        <div style="text-align:center;padding:24px 16px 16px;">
-            <img src="data:image/png;base64,{LOGO_B64}"
-                 style="max-width:140px;width:100%;opacity:0.95;"/>
-        </div>""", unsafe_allow_html=True)
+        logo_part = f'<img src="data:image/png;base64,{LOGO_B64}" style="height:34px;opacity:0.88;"/>' 
     else:
-        st.markdown("""
-        <div style="text-align:center;padding:24px 16px 16px;">
-            <span style="font-family:'Sora',sans-serif;font-size:1.1rem;
-                font-weight:700;color:#a8c4f0;letter-spacing:0.05em;">
-                ⛸️ ARENA ICE
-            </span>
-        </div>""", unsafe_allow_html=True)
- 
-    st.markdown('<hr style="border-color:rgba(96,165,250,0.15);margin:0 0 20px;"/>', unsafe_allow_html=True)
- 
-    st.markdown("""
-    <p style="font-size:0.7rem;font-weight:600;letter-spacing:0.12em;
-        text-transform:uppercase;color:#3a5a8a;margin:0 0 12px;padding:0 4px;">
-        Sistema de Contratos
-    </p>""", unsafe_allow_html=True)
- 
-    if st.button("🚪  Sair da sessao", use_container_width=True):
-        st.session_state.clear()
-        st.rerun()
+        logo_part = '<span style="font-family:Sora,sans-serif;font-size:0.85rem;font-weight:700;color:#3a5a8a;letter-spacing:0.08em;">ARENA ICE</span>'
+    st.markdown(
+        f'''<div class="sticky-footer">
+            <div>{logo_part}</div>
+        </div>''',
+        unsafe_allow_html=True
+    )
  
  
 # ─────────────────────────────────────────────
@@ -341,6 +369,46 @@ if not st.session_state.authenticated:
  
     st.stop()
  
+ 
+# ─────────────────────────────────────────────
+# HIDE SIDEBAR + RENDER FOOTER + SAIR BUTTON
+# ─────────────────────────────────────────────
+ 
+st.markdown('<style>section[data-testid="stSidebar"]{display:none!important;}</style>', unsafe_allow_html=True)
+ 
+render_footer()
+ 
+# Sair button — rendered invisible at bottom, overlaid by footer via CSS
+st.markdown('''
+<style>
+div[data-testid="stVerticalBlock"] > div:has(button#sair-btn) {
+    position: fixed;
+    bottom: 8px;
+    right: 32px;
+    z-index: 1000;
+}
+button#sair-btn {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(96,165,250,0.2) !important;
+    border-radius: 8px !important;
+    color: #7bafd4 !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    padding: 6px 16px !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+}
+button#sair-btn:hover {
+    background: rgba(96,165,250,0.1) !important;
+    border-color: rgba(96,165,250,0.4) !important;
+    color: #e8f0fe !important;
+}
+</style>
+''', unsafe_allow_html=True)
+ 
+if st.button("🚪 Sair", key="sair-btn"):
+    st.session_state.clear()
+    st.rerun()
  
 # ─────────────────────────────────────────────
 # SESSION STATE INIT
@@ -567,7 +635,6 @@ if st.session_state.contract_type == "big":
  
     with st.form("big_contract"):
  
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         section("👤", "Dados do Contratante")
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -577,9 +644,7 @@ if st.session_state.contract_type == "big":
         with col3:
             contractor_birthdate_raw = st.date_input("Data de nascimento *", value=None,
                 min_value=date(1920,1,1), max_value=date.today(), format="DD/MM/YYYY")
-        st.markdown('</div>', unsafe_allow_html=True)
  
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         section("📅", "Informacoes do Evento")
         col4, col5 = st.columns(2)
         with col4:
@@ -595,9 +660,7 @@ if st.session_state.contract_type == "big":
             event_start_time = st.time_input("Horario inicio *", value=None, step=1800)
         with col9:
             event_end_time = st.time_input("Horario termino *", value=None, step=1800)
-        st.markdown('</div>', unsafe_allow_html=True)
  
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         section("👥", "Capacidade")
         col10, col11 = st.columns(2)
         with col10:
@@ -606,9 +669,7 @@ if st.session_state.contract_type == "big":
         with col11:
             skaters_count = st.number_input("Pessoas para patinar *", min_value=0,
                 value=None, step=1, placeholder="Ex: 20")
-        st.markdown('</div>', unsafe_allow_html=True)
  
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         section("🎯", "Programacao")
         col12, col13, col14 = st.columns(3)
         with col12:
@@ -617,34 +678,27 @@ if st.session_state.contract_type == "big":
             second = st.text_input("2 atividade *", placeholder="Ex: 15:30 - Corte do bolo")
         with col14:
             third  = st.text_input("3 atividade *", placeholder="Ex: 16:30 - Encerramento")
-        st.markdown('</div>', unsafe_allow_html=True)
  
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         section("🏟️", "Arena")
         col_a1, col_a2 = st.columns(2)
         with col_a1:
             rink_name   = st.text_input("Nome da pista *", placeholder="Ex: Arena Ice Brasil")
         with col_a2:
             tipo_espaco = st.selectbox("Tipo de espaco", ["Espaco exclusivo", "Arena compartilhada"])
-        st.markdown('</div>', unsafe_allow_html=True)
  
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         section("💰", "Valores e Pagamento")
         contract_total_value = st.number_input("Valor total do contrato (R$) *",
             min_value=0.0, value=None, step=100.0, format="%.2f", placeholder="Ex: 1500.00")
         payment_terms = st.text_area("Condicoes de pagamento *",
             placeholder="Ex: 50% via PIX na assinatura e 50% ate 3 dias antes do evento.",
             height=90)
-        st.markdown('</div>', unsafe_allow_html=True)
  
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         section("✍️", "Assinatura")
         col15, col16 = st.columns(2)
         with col15:
             signature_day   = st.text_input("Dia *", placeholder="Ex: 12")
         with col16:
             signature_month = st.text_input("Mes *", placeholder="Ex: Maio")
-        st.markdown('</div>', unsafe_allow_html=True)
  
         st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
         st.caption("* Campos obrigatorios")
@@ -732,16 +786,13 @@ elif st.session_state.contract_type == "pocket":
  
     with st.form("pocket_contract"):
  
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         section("👤", "Dados do Contratante")
         col1, col2 = st.columns(2)
         with col1:
             contractor_name = st.text_input("Nome do contratante *", placeholder="Ex: Joao Silva")
         with col2:
             contractor_cpf = st.text_input("CPF *", placeholder="Ex: 123.456.789-00")
-        st.markdown('</div>', unsafe_allow_html=True)
  
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         section("🎉", "Aniversario")
         col3, col4 = st.columns(2)
         with col3:
@@ -749,9 +800,7 @@ elif st.session_state.contract_type == "pocket":
         with col4:
             birthday_age = st.number_input("Idade *", min_value=0, value=None,
                 step=1, placeholder="Ex: 7")
-        st.markdown('</div>', unsafe_allow_html=True)
  
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         section("📅", "Evento")
         col5, col6, col7 = st.columns(3)
         with col5:
@@ -761,9 +810,7 @@ elif st.session_state.contract_type == "pocket":
             start_time = st.time_input("Horario inicio *", value=None, step=1800)
         with col7:
             end_time = st.time_input("Horario termino *", value=None, step=1800)
-        st.markdown('</div>', unsafe_allow_html=True)
  
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         section("💰", "Pagamento")
         col8, col9, col10 = st.columns(3)
         with col8:
@@ -775,7 +822,6 @@ elif st.session_state.contract_type == "pocket":
         with col10:
             payment_date_raw = st.date_input("Data de pagamento *", value=None,
                 min_value=date.today(), format="DD/MM/YYYY")
-        st.markdown('</div>', unsafe_allow_html=True)
  
         st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
         st.caption("* Campos obrigatorios")
