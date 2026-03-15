@@ -308,14 +308,15 @@ hr { border-color: rgba(96,165,250,0.12) !important; }
  
 def render_footer():
     if LOGO_B64:
-        logo_part = f'<img src="data:image/png;base64,{LOGO_B64}" style="height:34px;opacity:0.88;"/>' 
+        logo_part = f'<img src="data:image/png;base64,{LOGO_B64}" style="height:34px;opacity:0.88;"/>'
     else:
         logo_part = '<span style="font-family:Sora,sans-serif;font-size:0.85rem;font-weight:700;color:#3a5a8a;letter-spacing:0.08em;">ARENA ICE</span>'
     st.markdown(
-        f'''<div class="sticky-footer">
+        f"""<div class="sticky-footer">
             <div>{logo_part}</div>
-        </div>''',
-        unsafe_allow_html=True
+            <a href="?sair=1" class="footer-sair-btn" target="_self">🚪 Sair</a>
+        </div>""",
+        unsafe_allow_html=True,
     )
  
  
@@ -376,39 +377,13 @@ if not st.session_state.authenticated:
  
 st.markdown('<style>section[data-testid="stSidebar"]{display:none!important;}</style>', unsafe_allow_html=True)
  
-render_footer()
- 
-# Sair button — rendered invisible at bottom, overlaid by footer via CSS
-st.markdown('''
-<style>
-div[data-testid="stVerticalBlock"] > div:has(button#sair-btn) {
-    position: fixed;
-    bottom: 8px;
-    right: 32px;
-    z-index: 1000;
-}
-button#sair-btn {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(96,165,250,0.2) !important;
-    border-radius: 8px !important;
-    color: #7bafd4 !important;
-    font-size: 0.82rem !important;
-    font-weight: 500 !important;
-    padding: 6px 16px !important;
-    cursor: pointer !important;
-    transition: all 0.2s !important;
-}
-button#sair-btn:hover {
-    background: rgba(96,165,250,0.1) !important;
-    border-color: rgba(96,165,250,0.4) !important;
-    color: #e8f0fe !important;
-}
-</style>
-''', unsafe_allow_html=True)
- 
-if st.button("🚪 Sair", key="sair-btn"):
+# Detect logout via query param (set by footer link)
+if st.query_params.get("sair") == "1":
     st.session_state.clear()
+    st.query_params.clear()
     st.rerun()
+ 
+render_footer()
  
 # ─────────────────────────────────────────────
 # SESSION STATE INIT
@@ -875,4 +850,3 @@ elif st.session_state.contract_type == "pocket":
                 st.rerun()
             except FileNotFoundError:
                 st.error("Template nao encontrado. Contate o administrador.")
- 
