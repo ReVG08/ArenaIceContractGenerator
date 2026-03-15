@@ -225,10 +225,11 @@ hr { border-color: rgba(96,165,250,0.12) !important; }
     z-index: 999;
     background: linear-gradient(90deg, #060d1f 0%, #0b1a3a 100%);
     border-top: 1px solid rgba(96,165,250,0.12);
-    padding: 12px 32px;
+    padding: 10px 32px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 20px;
 }
 .sticky-footer img {
     height: 36px;
@@ -353,7 +354,7 @@ if not st.session_state.authenticated:
                 Bem-vindo
             </p>
             <p style="font-size:0.85rem;color:#4a6a9a;text-align:center;margin:0 0 28px;">
-                Acesso restrito — equipe Arena Ice
+                Acesso restrito — Equipe Arena Ice
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -411,7 +412,7 @@ st.markdown("""
         Gerador de Contratos
     </p>
     <p style="font-size:0.85rem;color:#3a5a8a;margin:4px 0 0;">
-        Arena Ice — Sistema interno
+        Arena Ice — Sistema Interno
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -648,16 +649,16 @@ if st.session_state.contract_type == "big":
         section("🎯", "Programacao")
         col12, col13, col14 = st.columns(3)
         with col12:
-            first  = st.text_input("1 atividade *", placeholder="Ex: 14:30 - Entrada na pista")
+            first  = st.text_input("1 atividade *", placeholder="Ex: 14:30")
         with col13:
-            second = st.text_input("2 atividade *", placeholder="Ex: 15:30 - Corte do bolo")
+            second = st.text_input("2 atividade *", placeholder="Ex: 15:30")
         with col14:
-            third  = st.text_input("3 atividade *", placeholder="Ex: 16:30 - Encerramento")
+            third  = st.text_input("3 atividade *", placeholder="Ex: 16:30")
  
         section("🏟️", "Arena")
         col_a1, col_a2 = st.columns(2)
         with col_a1:
-            rink_name   = st.text_input("Nome da pista *", placeholder="Ex: Arena Ice Brasil")
+            rink_name   = st.text_input("Nome da pista *", placeholder="Ex: Exclusivo")
         with col_a2:
             tipo_espaco = st.selectbox("Tipo de espaco", ["Espaco exclusivo", "Arena compartilhada"])
  
@@ -850,3 +851,4 @@ elif st.session_state.contract_type == "pocket":
                 st.rerun()
             except FileNotFoundError:
                 st.error("Template nao encontrado. Contate o administrador.")
+ 
