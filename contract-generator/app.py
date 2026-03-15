@@ -1,7 +1,5 @@
 import re
 import os
-import base64
-import subprocess
 import tempfile
 from datetime import date
  
@@ -60,38 +58,30 @@ def render_docx(template_path: str, context: dict) -> bytes:
         os.unlink(tmp.name)
  
  
-def docx_to_pdf_base64(docx_bytes: bytes):
-    with tempfile.TemporaryDirectory() as tmpdir:
-        docx_path = os.path.join(tmpdir, "contract.docx")
-        pdf_path = os.path.join(tmpdir, "contract.pdf")
-        with open(docx_path, "wb") as f:
-            f.write(docx_bytes)
-        result = subprocess.run(
-            ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", tmpdir, docx_path],
-            capture_output=True,
-            timeout=30,
-        )
-        if result.returncode != 0 or not os.path.exists(pdf_path):
-            return None
-        with open(pdf_path, "rb") as f:
-            return base64.b64encode(f.read()).decode("utf-8")
- 
- 
 def show_contract_preview(docx_bytes: bytes):
+    import mammoth
+    import io
     with st.spinner("Gerando pre-visualizacao..."):
-        pdf_b64 = docx_to_pdf_base64(docx_bytes)
-    if pdf_b64 is None:
-        st.error("Nao foi possivel gerar a pre-visualizacao. Verifique se o LibreOffice esta instalado.")
-        return
-    pdf_embed = f"""
-        <iframe
-            src="data:application/pdf;base64,{pdf_b64}"
-            width="100%"
-            height="900px"
-            style="border: 1px solid #ddd; border-radius: 8px;"
-        ></iframe>
+        result = mammoth.convert_to_html(io.BytesIO(docx_bytes))
+        html_content = result.value
+ 
+    styled_html = f"""
+    <div style="
+        background: white;
+        padding: 60px 80px;
+        max-width: 860px;
+        margin: 0 auto;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #111;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    ">
+        {html_content}
+    </div>
     """
-    st.markdown(pdf_embed, unsafe_allow_html=True)
+    st.markdown(styled_html, unsafe_allow_html=True)
  
  
 # ---------------------------------------------
@@ -537,4 +527,3 @@ elif st.session_state.contract_type == "pocket":
                 st.rerun()
             except FileNotFoundError:
                 st.error("Template nao encontrado. Contate o administrador.")
- 
