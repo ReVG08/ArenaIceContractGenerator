@@ -1,0 +1,203 @@
+{
+  "name": "Evento Grande",
+  "icon": "🎉",
+  "description": "Eventos completos, aniversarios grandes e reservas exclusivas da pista.",
+  "template": "evento_grande.docx",
+  "filename_fields": [
+    "contractor_name",
+    "event_date"
+  ],
+  "sections": [
+    {
+      "label": "Dados do Contratante",
+      "icon": "👤",
+      "fields": [
+        {
+          "key": "contractor_name",
+          "label": "Nome do contratante",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: Joao Silva"
+        },
+        {
+          "key": "contractor_cpf",
+          "label": "CPF",
+          "type": "cpf",
+          "required": true,
+          "placeholder": "Ex: 123.456.789-00"
+        },
+        {
+          "key": "contractor_birthdate",
+          "label": "Data de nascimento",
+          "type": "date",
+          "required": true,
+          "past_only": true
+        }
+      ]
+    },
+    {
+      "label": "Informacoes do Evento",
+      "icon": "📅",
+      "fields": [
+        {
+          "key": "event_name",
+          "label": "Nome do evento",
+          "type": "text",
+          "required": true,
+          "default": "ANIVERSARIO",
+          "placeholder": "Ex: Aniversario da Maria"
+        },
+        {
+          "key": "event_date",
+          "label": "Data do evento",
+          "type": "date",
+          "required": true,
+          "future_only": true,
+          "derive_weekday": "event_weekday"
+        },
+        {
+          "key": "event_weekday",
+          "label": "Dia da semana",
+          "type": "derived",
+          "derived_from": "event_date"
+        },
+        {
+          "key": "event_duration_hours",
+          "label": "Duracao (horas)",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: 3"
+        },
+        {
+          "key": "event_start_time",
+          "label": "Horario inicio",
+          "type": "time",
+          "required": true,
+          "time_end_key": "event_end_time"
+        },
+        {
+          "key": "event_end_time",
+          "label": "Horario termino",
+          "type": "time",
+          "required": true,
+          "time_start_key": "event_start_time"
+        }
+      ]
+    },
+    {
+      "label": "Capacidade",
+      "icon": "👥",
+      "fields": [
+        {
+          "key": "guest_count",
+          "label": "Maximo de convidados",
+          "type": "number",
+          "required": true,
+          "placeholder": "Ex: 50"
+        },
+        {
+          "key": "skaters_count",
+          "label": "Pessoas para patinar",
+          "type": "number",
+          "required": true,
+          "placeholder": "Ex: 20"
+        }
+      ]
+    },
+    {
+      "label": "Programacao",
+      "icon": "🎯",
+      "fields": [
+        {
+          "key": "first",
+          "label": "1 atividade",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: 14:30 - Entrada na pista"
+        },
+        {
+          "key": "second",
+          "label": "2 atividade",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: 15:30 - Corte do bolo"
+        },
+        {
+          "key": "third",
+          "label": "3 atividade",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: 16:30 - Encerramento"
+        }
+      ]
+    },
+    {
+      "label": "Arena",
+      "icon": "🏟️",
+      "fields": [
+        {
+          "key": "rink_name",
+          "label": "Nome da pista",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: Arena Ice Brasil"
+        },
+        {
+          "key": "tipo_espaco",
+          "label": "Tipo de espaco",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Espaco exclusivo",
+            "Arena compartilhada"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Valores e Pagamento",
+      "icon": "💰",
+      "fields": [
+        {
+          "key": "contract_total_value",
+          "label": "Valor total do contrato (R$)",
+          "type": "currency",
+          "required": true,
+          "placeholder": "Ex: 1500.00"
+        },
+        {
+          "key": "contract_total_value_written",
+          "type": "currency_written",
+          "derived_from": "contract_total_value"
+        },
+        {
+          "key": "payment_terms",
+          "label": "Condicoes de pagamento",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Ex: 50% via PIX na assinatura e 50% ate 3 dias antes do evento."
+        }
+      ]
+    },
+    {
+      "label": "Assinatura",
+      "icon": "✍️",
+      "fields": [
+        {
+          "key": "signature_day",
+          "label": "Dia",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: 12"
+        },
+        {
+          "key": "signature_month",
+          "label": "Mes",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: Maio"
+        }
+      ]
+    }
+  ]
+}

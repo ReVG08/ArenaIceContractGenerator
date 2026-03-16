@@ -1,4 +1,5 @@
 streamlit
 docxtpl
-python-docx
 mammoth
+weasyprint
+ 

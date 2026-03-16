@@ -1,0 +1,43 @@
+{
+  "app_name":        "Arena Ice",
+  "app_subtitle":    "Area de Login - Sistema de Contratos - Equipe Arena Ice",
+  "password":        "2031",
+
+  "logo":            "logo.png",
+  "default_theme":   "dark",
+
+  "accent_color":    "#1d6aff",
+  "accent_hover":    "#0d4fd4",
+  "accent_success":  "#0ea86e",
+  "accent_success_hover": "#0b8f5c",
+
+  "dark_bg_from":    "#060d1f",
+  "dark_bg_mid":     "#0b1a3a",
+  "dark_bg_to":      "#071228",
+  "dark_surface":    "rgba(255,255,255,0.03)",
+  "dark_surface_border": "rgba(96,165,250,0.10)",
+  "dark_text_main":  "#e8f0fe",
+  "dark_text_sub":   "#4a6a9a",
+  "dark_text_label": "#7bafd4",
+  "dark_input_bg":   "rgba(255,255,255,0.04)",
+  "dark_input_border": "rgba(96,165,250,0.20)",
+
+  "light_bg_from":   "#f0f4ff",
+  "light_bg_mid":    "#ffffff",
+  "light_bg_to":     "#f5f7ff",
+  "light_surface":   "rgba(0,0,0,0.02)",
+  "light_surface_border": "rgba(0,0,0,0.08)",
+  "light_text_main": "#0f1c3f",
+  "light_text_sub":  "#6b7fa3",
+  "light_text_label":"#3a5a9a",
+  "light_input_bg":  "#ffffff",
+  "light_input_border": "rgba(0,0,0,0.12)",
+
+  "font_heading":    "Sora",
+  "font_body":       "DM Sans",
+  "font_google_url": "https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700;800&display=swap",
+
+  "border_radius_card":   "20px",
+  "border_radius_input":  "10px",
+  "border_radius_button": "10px"
+}

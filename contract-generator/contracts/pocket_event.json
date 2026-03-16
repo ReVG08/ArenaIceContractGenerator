@@ -1,0 +1,118 @@
+{
+  "name": "Pocket Event",
+  "icon": "🎂",
+  "description": "Eventos menores e aniversarios rapidos com menos variaveis.",
+  "template": "pocket_event.docx",
+  "filename_fields": [
+    "contractor_name",
+    "event_date"
+  ],
+  "sections": [
+    {
+      "label": "Dados do Contratante",
+      "icon": "👤",
+      "fields": [
+        {
+          "key": "contractor_name",
+          "label": "Nome do contratante",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: Joao Silva"
+        },
+        {
+          "key": "contractor_cpf",
+          "label": "CPF",
+          "type": "cpf",
+          "required": true,
+          "placeholder": "Ex: 123.456.789-00"
+        }
+      ]
+    },
+    {
+      "label": "Aniversario",
+      "icon": "🎉",
+      "fields": [
+        {
+          "key": "birthday_person",
+          "label": "Nome do aniversariante",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: Maria"
+        },
+        {
+          "key": "birthday_age",
+          "label": "Idade",
+          "type": "number",
+          "required": true,
+          "placeholder": "Ex: 7"
+        }
+      ]
+    },
+    {
+      "label": "Evento",
+      "icon": "📅",
+      "fields": [
+        {
+          "key": "event_date",
+          "label": "Data do evento",
+          "type": "date",
+          "required": true,
+          "future_only": true
+        },
+        {
+          "key": "start_time",
+          "label": "Horario inicio",
+          "type": "time",
+          "required": true,
+          "time_end_key": "end_time"
+        },
+        {
+          "key": "end_time",
+          "label": "Horario termino",
+          "type": "time",
+          "required": true,
+          "time_start_key": "start_time"
+        }
+      ]
+    },
+    {
+      "label": "Pagamento",
+      "icon": "💰",
+      "fields": [
+        {
+          "key": "contract_value",
+          "label": "Valor do contrato (R$)",
+          "type": "currency",
+          "required": true,
+          "placeholder": "Ex: 800.00"
+        },
+        {
+          "key": "contract_value_written",
+          "type": "currency_written",
+          "derived_from": "contract_value"
+        },
+        {
+          "key": "payment_method",
+          "label": "Forma de pagamento",
+          "type": "select",
+          "required": true,
+          "options": [
+            "PIX",
+            "Cartao de credito",
+            "Cartao de debito",
+            "Boleto",
+            "Dinheiro",
+            "Outro"
+          ]
+        },
+        {
+          "key": "payment_date",
+          "label": "Data de pagamento",
+          "type": "date",
+          "required": true,
+          "future_only": true
+        }
+      ]
+    }
+  ]
+}
