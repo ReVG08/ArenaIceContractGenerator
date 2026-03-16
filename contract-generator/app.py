@@ -184,6 +184,28 @@ def get_logo_b64(filename: str) -> str:
         return ""
  
  
+def resolve_template(template_filename: str, contract_id: str) -> str:
+    """
+    Search for the template file in this order:
+    1. contracts/<filename>
+    2. <root>/<filename>
+    3. contracts/<contract_id>.docx  (fallback by contract id)
+    Raises FileNotFoundError with a helpful message if not found.
+    """
+    candidates = [
+        os.path.join(CONTRACTS_DIR, template_filename),
+        os.path.join(BASE_DIR, template_filename),
+        os.path.join(CONTRACTS_DIR, f"{contract_id}.docx"),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    checked = "\n  ".join(candidates)
+    raise FileNotFoundError(
+        f"Template '{template_filename}' not found. Checked:\n  {checked}"
+    )
+ 
+ 
 def render_docx(template_path: str, context: dict) -> bytes:
     doc = DocxTemplate(template_path)
     doc.render(context)
@@ -323,33 +345,84 @@ def inject_css(cfg: dict, theme: str):
 <style>
 @import url('{gurl}');
  
+/* ── Keyframe animations ── */
+@keyframes fadeSlideUp {{
+    from {{ opacity: 0; transform: translateY(18px); }}
+    to   {{ opacity: 1; transform: translateY(0); }}
+}}
+@keyframes fadeIn {{
+    from {{ opacity: 0; }}
+    to   {{ opacity: 1; }}
+}}
+@keyframes pulseGlow {{
+    0%, 100% {{ box-shadow: 0 0 0 0 {acc}44; }}
+    50%       {{ box-shadow: 0 0 0 8px {acc}00; }}
+}}
+@keyframes successPop {{
+    0%   {{ transform: scale(0.85); opacity: 0; }}
+    60%  {{ transform: scale(1.04); opacity: 1; }}
+    100% {{ transform: scale(1); }}
+}}
+@keyframes shimmer {{
+    0%   {{ background-position: -400px 0; }}
+    100% {{ background-position: 400px 0; }}
+}}
+@keyframes cardFloat {{
+    0%, 100% {{ transform: translateY(0px); }}
+    50%       {{ transform: translateY(-4px); }}
+}}
+ 
+/* ── Custom cursor ── */
+*, *::before, *::after {{
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='4' fill='{acc.replace('#','%23')}' opacity='0.9'/%3E%3Ccircle cx='12' cy='12' r='8' fill='none' stroke='{acc.replace('#','%23')}' stroke-width='1.5' opacity='0.4'/%3E%3C/svg%3E") 12 12, auto !important;
+}}
+button, a, [role="button"], .stButton button, .stDownloadButton button,
+.stFormSubmitButton button, .footer-sair-btn, .contract-card {{
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='6' fill='{acc.replace('#','%23')}' opacity='1'/%3E%3Ccircle cx='14' cy='14' r='11' fill='none' stroke='{acc.replace('#','%23')}' stroke-width='1.5' opacity='0.6'/%3E%3C/svg%3E") 14 14, pointer !important;
+}}
+input, textarea, select {{
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='24' viewBox='0 0 20 24'%3E%3Crect x='9' y='0' width='2' height='24' fill='{acc.replace('#','%23')}' rx='1'/%3E%3Crect x='4' y='0' width='12' height='3' fill='{acc.replace('#','%23')}' rx='1'/%3E%3Crect x='4' y='21' width='12' height='3' fill='{acc.replace('#','%23')}' rx='1'/%3E%3C/svg%3E") 10 12, text !important;
+}}
+ 
+/* ── Base ── */
 html, body, [class*="css"] {{ font-family: '{fb}', sans-serif !important; }}
-.stApp {{ background: linear-gradient(135deg, {bg_from} 0%, {bg_mid} 50%, {bg_to} 100%); min-height: 100vh; }}
+.stApp {{
+    background: linear-gradient(135deg, {bg_from} 0%, {bg_mid} 50%, {bg_to} 100%);
+    min-height: 100vh;
+    animation: fadeIn 0.4s ease;
+}}
  
 #MainMenu, footer, header {{ visibility: hidden; }}
-.block-container {{ padding-top: 2rem !important; padding-bottom: 80px !important; }}
+.block-container {{
+    padding-top: 2rem !important;
+    padding-bottom: 80px !important;
+    animation: fadeSlideUp 0.45s cubic-bezier(.22,.68,0,1.2) both;
+}}
 section[data-testid="stSidebar"] {{ display: none !important; }}
  
 h1,h2,h3 {{ font-family: '{fh}', sans-serif !important; color: {t_main} !important; }}
 p, span, div {{ color: {t_main}; }}
  
+/* ── Labels ── */
 label, .stTextInput label, .stNumberInput label,
 .stSelectbox label, .stDateInput label,
 .stTimeInput label, .stTextArea label {{
     color: {t_label} !important;
     font-size: 0.78rem !important;
-    font-weight: 500 !important;
-    letter-spacing: 0.06em !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.07em !important;
     text-transform: uppercase !important;
+    transition: color 0.2s !important;
 }}
  
+/* ── Inputs ── */
 .stTextInput input, .stNumberInput input, [data-baseweb="input"] input {{
     background: {inp_bg} !important;
     border: 1px solid {inp_b} !important;
     border-radius: {r_input} !important;
     color: {inp_c} !important;
     font-family: '{fb}', sans-serif !important;
-    transition: border-color 0.2s, box-shadow 0.2s !important;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s !important;
     -webkit-text-fill-color: {inp_c} !important;
 }}
 .stTextInput input:focus, .stNumberInput input:focus, [data-baseweb="input"] input:focus {{
@@ -369,6 +442,11 @@ label, .stTextInput label, .stNumberInput label,
     color: {inp_c} !important;
     -webkit-text-fill-color: {inp_c} !important;
     font-family: '{fb}', sans-serif !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}}
+.stTextArea textarea:focus {{
+    border-color: {acc} !important;
+    box-shadow: 0 0 0 3px {acc}22 !important;
 }}
 .stTextArea textarea::placeholder {{
     color: {t_sub} !important;
@@ -379,6 +457,7 @@ label, .stTextInput label, .stNumberInput label,
     border: 1px solid {inp_b} !important;
     border-radius: {r_input} !important;
     color: {inp_c} !important;
+    transition: border-color 0.2s !important;
 }}
 [data-baseweb="select"] span,
 [data-baseweb="select"] div,
@@ -399,26 +478,18 @@ label, .stTextInput label, .stNumberInput label,
     -webkit-text-fill-color: {inp_c} !important;
     background: transparent !important;
 }}
-/* Date and time picker text */
-[data-baseweb="input"] div,
-[data-baseweb="input"] span {{
+[data-baseweb="input"] div, [data-baseweb="input"] span {{
     color: {inp_c} !important;
     -webkit-text-fill-color: {inp_c} !important;
 }}
-/* Number input arrows */
-.stNumberInput button {{
-    color: {inp_c} !important;
-}}
-/* Selectbox dropdown menu items */
-[data-baseweb="menu"] li,
-[data-baseweb="menu"] div {{
+.stNumberInput button {{ color: {inp_c} !important; }}
+[data-baseweb="menu"] li, [data-baseweb="menu"] div {{
     background: {inp_bg} !important;
     color: {inp_c} !important;
 }}
-[data-baseweb="option"]:hover {{
-    background: {acc}22 !important;
-}}
+[data-baseweb="option"]:hover {{ background: {acc}22 !important; }}
  
+/* ── Buttons ── */
 .stButton button[kind="primary"],
 .stFormSubmitButton button[kind="primary"] {{
     background: linear-gradient(135deg, {acc} 0%, {acc_h} 100%) !important;
@@ -427,14 +498,20 @@ label, .stTextInput label, .stNumberInput label,
     color: #fff !important;
     font-family: '{fb}', sans-serif !important;
     font-weight: 600 !important;
-    letter-spacing: 0.03em !important;
-    transition: all 0.2s !important;
+    letter-spacing: 0.04em !important;
+    transition: all 0.22s cubic-bezier(.22,.68,0,1.2) !important;
     box-shadow: 0 4px 20px {acc}55 !important;
+    position: relative !important;
+    overflow: hidden !important;
 }}
 .stButton button[kind="primary"]:hover,
 .stFormSubmitButton button[kind="primary"]:hover {{
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 28px {acc}88 !important;
+    transform: translateY(-2px) scale(1.01) !important;
+    box-shadow: 0 8px 32px {acc}88 !important;
+}}
+.stButton button[kind="primary"]:active,
+.stFormSubmitButton button[kind="primary"]:active {{
+    transform: translateY(0) scale(0.98) !important;
 }}
 .stButton button[kind="secondary"] {{
     background: {ghost_bg} !important;
@@ -443,12 +520,13 @@ label, .stTextInput label, .stNumberInput label,
     color: {ghost_c} !important;
     font-family: '{fb}', sans-serif !important;
     font-weight: 500 !important;
-    transition: all 0.2s !important;
+    transition: all 0.2s ease !important;
 }}
 .stButton button[kind="secondary"]:hover {{
     background: {ghost_hbg} !important;
     border-color: {ghost_hb} !important;
     color: {ghost_hc} !important;
+    transform: translateY(-1px) !important;
 }}
 .stDownloadButton button {{
     background: linear-gradient(135deg, {acc_s} 0%, {acc_sh} 100%) !important;
@@ -458,14 +536,15 @@ label, .stTextInput label, .stNumberInput label,
     font-family: '{fb}', sans-serif !important;
     font-weight: 600 !important;
     box-shadow: 0 4px 20px {acc_s}55 !important;
-    transition: all 0.2s !important;
+    transition: all 0.22s cubic-bezier(.22,.68,0,1.2) !important;
 }}
 .stDownloadButton button:hover {{
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 28px {acc_s}88 !important;
+    transform: translateY(-2px) scale(1.01) !important;
+    box-shadow: 0 8px 32px {acc_s}88 !important;
 }}
  
-.stAlert {{ border-radius: {r_card} !important; border: none !important; }}
+/* ── Misc ── */
+.stAlert {{ border-radius: {r_card} !important; border: none !important; animation: fadeSlideUp 0.3s ease; }}
 hr {{ border-color: {divider_c} !important; }}
 .stCaption, small {{ color: {t_sub} !important; }}
 .stSpinner > div {{ border-top-color: {acc} !important; }}
@@ -482,6 +561,8 @@ hr {{ border-color: {divider_c} !important; }}
     align-items: center;
     justify-content: flex-start;
     gap: 20px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }}
 .footer-sair-btn {{
     background: {ghost_bg};
@@ -492,72 +573,101 @@ hr {{ border-color: {divider_c} !important; }}
     font-size: 0.82rem;
     font-weight: 500;
     padding: 7px 18px;
-    cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     text-decoration: none;
+    letter-spacing: 0.02em;
 }}
 .footer-sair-btn:hover {{
     background: {ghost_hbg};
     border-color: {ghost_hb};
     color: {ghost_hc};
+    transform: translateY(-1px);
 }}
  
 /* ── Section label ── */
 .section-label {{
     font-family: '{fh}', sans-serif;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: {t_label};
-    margin-top: 28px;
+    margin-top: 32px;
     padding-top: 24px;
     border-top: 1px solid {section_b};
-    margin-bottom: 16px;
+    margin-bottom: 18px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    animation: fadeSlideUp 0.3s ease both;
 }}
 .section-label span {{
-    display: inline-block;
-    width: 20px; height: 20px;
-    background: {acc}22;
-    border: 1px solid {acc}44;
-    border-radius: 5px;
-    text-align: center;
-    line-height: 20px;
-    font-size: 0.7rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    background: {acc}20;
+    border: 1px solid {acc}40;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    transition: background 0.2s, transform 0.2s;
+}}
+.section-label:hover span {{
+    background: {acc}35;
+    transform: scale(1.1);
 }}
  
-/* ── Cards ── */
+/* ── Contract selection cards ── */
 .contract-card {{
     background: {surface};
     border: 1px solid {surf_b};
     border-radius: {r_card};
-    padding: 36px 32px;
+    padding: 40px 32px 32px;
     text-align: center;
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+    animation: fadeSlideUp 0.4s cubic-bezier(.22,.68,0,1.2) both;
 }}
-.contract-card-icon {{ font-size: 2.6rem; margin-bottom: 14px; }}
+.contract-card:hover {{
+    border-color: {acc}88;
+    box-shadow: 0 12px 40px {acc}22;
+    transform: translateY(-4px);
+}}
+.contract-card-icon {{
+    font-size: 2.8rem;
+    margin-bottom: 16px;
+    display: block;
+    animation: cardFloat 3s ease-in-out infinite;
+}}
 .contract-card-name {{
     font-family: '{fh}', sans-serif !important;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: {t_main} !important;
-    margin: 0 0 8px;
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
 }}
 .contract-card-desc {{
     font-size: 0.82rem;
     color: {t_sub} !important;
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.6;
 }}
+ 
+/* ── Success card ── */
 .success-card {{
     background: linear-gradient(135deg, {acc_s}18, {acc_s}06);
     border: 1px solid {acc_s}50;
     border-radius: {r_card};
-    padding: 36px 40px;
+    padding: 40px;
     text-align: center;
     margin-bottom: 28px;
+    animation: successPop 0.5s cubic-bezier(.22,.68,0,1.2) both;
+}}
+.success-icon {{
+    font-size: 3rem;
+    margin-bottom: 14px;
+    display: block;
+    animation: successPop 0.6s cubic-bezier(.22,.68,0,1.2) 0.1s both;
 }}
  
 /* ── Typography helpers ── */
@@ -567,35 +677,83 @@ hr {{ border-color: {divider_c} !important; }}
     font-weight: 800;
     color: {t_main};
     margin: 0;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+    animation: fadeSlideUp 0.4s ease both;
 }}
-.page-subtitle {{ font-size: 0.85rem; color: {t_sub}; margin: 4px 0 0; }}
+.page-subtitle {{
+    font-size: 0.85rem;
+    color: {t_sub};
+    margin: 4px 0 0;
+    animation: fadeSlideUp 0.4s ease 0.05s both;
+}}
 .form-title {{
     font-family: '{fh}', sans-serif;
     font-size: 1.3rem;
     font-weight: 700;
     color: {t_main};
     margin: 0 0 4px;
+    animation: fadeSlideUp 0.35s ease both;
 }}
-.form-subtitle {{ font-size: 0.82rem; color: {t_sub}; margin: 0 0 24px; }}
+.form-subtitle {{
+    font-size: 0.82rem;
+    color: {t_sub};
+    margin: 0 0 24px;
+    animation: fadeSlideUp 0.35s ease 0.05s both;
+}}
 .success-title {{
     font-family: '{fh}', sans-serif;
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: 700;
     color: {t_main};
     margin: 0 0 6px;
 }}
-.success-sub {{ font-size: 0.9rem; color: {acc_s}; margin: 0; }}
-.warn-text {{ font-size: 0.8rem; color: {warn_c}; margin-bottom: 6px; }}
+.success-sub {{ font-size: 0.9rem; color: {acc_s}; margin: 0; font-weight: 500; }}
+.warn-text {{ font-size: 0.8rem; color: {warn_c}; margin-bottom: 8px; font-weight: 500; }}
 .err-box {{
     background: {err_bg};
     border: 1px solid {err_b};
     border-radius: {r_card};
     padding: 16px 20px;
     margin-top: 12px;
+    animation: fadeSlideUp 0.3s ease both;
 }}
 .err-title {{ color: {err_c}; font-weight: 600; margin: 0 0 8px; font-size: 0.85rem; }}
-.err-list {{ color: {err_li}; font-size: 0.82rem; margin: 0; padding-left: 18px; }}
+.err-list {{ color: {err_li}; font-size: 0.82rem; margin: 0; padding-left: 18px; line-height: 1.8; }}
+.crumb-root {{ font-size: 0.75rem; color: {crumb_c}; }}
+.crumb-sep  {{ font-size: 0.75rem; color: {crumb_sep}; }}
+.crumb-active {{ font-size: 0.75rem; font-weight: 600; color: {crumb_active}; }}
+ 
+/* ── Login card ── */
+.login-card {{
+    {login_card}
+    border-radius: {r_card};
+    padding: 40px 36px 32px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    animation: fadeSlideUp 0.5s cubic-bezier(.22,.68,0,1.2) both;
+}}
+.login-title {{
+    font-family: '{fh}', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: {t_main};
+    text-align: center;
+    margin: 0 0 6px;
+}}
+.login-sub {{ font-size: 0.85rem; color: {t_sub}; text-align: center; margin: 0 0 28px; }}
+ 
+/* ── Scrollbar ── */
+::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+::-webkit-scrollbar-track {{ background: transparent; }}
+::-webkit-scrollbar-thumb {{
+    background: {acc}44;
+    border-radius: 99px;
+}}
+::-webkit-scrollbar-thumb:hover {{ background: {acc}88; }}
+ 
+/* ── Selection highlight ── */
+::selection {{ background: {acc}44; color: {t_main}; }}
+</style>
 .crumb-root {{ font-size: 0.75rem; color: {crumb_c}; }}
 .crumb-sep  {{ font-size: 0.75rem; color: {crumb_sep}; }}
 .crumb-active {{ font-size: 0.75rem; font-weight: 600; color: {crumb_active}; }}
@@ -867,8 +1025,9 @@ if st.session_state.contract_id is None:
  
     for i, contract in enumerate(contracts):
         with cols[i]:
+            delay = f"{i * 0.08:.2f}s"
             st.markdown(f"""
-            <div class="contract-card">
+            <div class="contract-card" style="animation-delay:{delay}">
                 <div class="contract-card-icon">{contract.get('icon','📄')}</div>
                 <p class="contract-card-name">{contract['name']}</p>
                 <p class="contract-card-desc">{contract.get('description','')}</p>
@@ -900,7 +1059,7 @@ if st.session_state.generated_docx is not None:
     name_display = filename.replace("contrato_","").replace(".docx","").replace("_"," ")
  
     st.markdown(f"""<div class="success-card">
-        <div style="font-size:2.8rem;margin-bottom:12px;">✅</div>
+        <span class="success-icon">✅</span>
         <p class="success-title">Contrato gerado!</p>
         <p class="success-sub">{name_display}</p>
     </div>""", unsafe_allow_html=True)
@@ -1042,11 +1201,11 @@ if submit:
     else:
         try:
             context  = build_context(active, raw_values)
-            tpl_path = os.path.join(CONTRACTS_DIR, active["template"])
+            tpl_path = resolve_template(active["template"], active["_id"])
             st.session_state.generated_docx    = render_docx(tpl_path, context)
             st.session_state.generated_filename = build_filename(active, context)
             st.session_state.saved_form_values  = raw_values
             st.session_state.show_preview       = False
             st.rerun()
         except FileNotFoundError:
-            st.error(f"Template '{active['template']}' nao encontrado em contracts/.")
+            st.error(f"Template '{active['template']}' nao encontrado. Verifique se o arquivo .docx esta na pasta contracts/ ou na raiz do projeto.")

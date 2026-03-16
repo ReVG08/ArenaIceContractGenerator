@@ -113,21 +113,21 @@
           "label": "1 atividade",
           "type": "text",
           "required": true,
-          "placeholder": "Ex: 14:30 - Entrada na pista"
+          "placeholder": "Ex: 14:30"
         },
         {
           "key": "second",
           "label": "2 atividade",
           "type": "text",
           "required": true,
-          "placeholder": "Ex: 15:30 - Corte do bolo"
+          "placeholder": "Ex: 15:30"
         },
         {
           "key": "third",
           "label": "3 atividade",
           "type": "text",
           "required": true,
-          "placeholder": "Ex: 16:30 - Encerramento"
+          "placeholder": "Ex: 16:30"
         }
       ]
     },
@@ -137,10 +137,10 @@
       "fields": [
         {
           "key": "rink_name",
-          "label": "Nome da pista",
+          "label": "Tipo de pista",
           "type": "text",
           "required": true,
-          "placeholder": "Ex: Arena Ice Brasil"
+          "placeholder": "Ex: Exclusiva"
         },
         {
           "key": "tipo_espaco",
