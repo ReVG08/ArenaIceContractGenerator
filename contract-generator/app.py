@@ -753,13 +753,21 @@ hr {{ border-color: {divider_c} !important; }}
  
 /* ── Selection highlight ── */
 ::selection {{ background: {acc}44; color: {t_main}; }}
-</style>
+ 
+/* ── Breadcrumb ── */
 .crumb-root {{ font-size: 0.75rem; color: {crumb_c}; }}
 .crumb-sep  {{ font-size: 0.75rem; color: {crumb_sep}; }}
 .crumb-active {{ font-size: 0.75rem; font-weight: 600; color: {crumb_active}; }}
  
 /* ── Login card ── */
-.login-card {{ {login_card} border-radius: {r_card}; padding: 40px 36px 32px; backdrop-filter: blur(12px); }}
+.login-card {{
+    {login_card}
+    border-radius: {r_card};
+    padding: 40px 36px 32px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    animation: fadeSlideUp 0.5s cubic-bezier(.22,.68,0,1.2) both;
+}}
 .login-title {{
     font-family: '{fh}', sans-serif;
     font-size: 1.4rem;
