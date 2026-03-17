@@ -183,18 +183,20 @@ def build_filename(contract: dict, context: dict) -> str:
 # FIELD RENDERER (outside form — for wizard)
 # ─────────────────────────────────────────────
 
-def render_field_free(field: dict, saved: dict):
+def render_field_free(field: dict, saved: dict, step_idx: int = 0):
     """Render a field outside st.form using unique session-state keys."""
     ftype  = field.get("type", "text")
     if ftype in ("derived", "currency_written"):
         return None
-    key    = field["key"]
-    label  = field.get("label", key)
-    req    = field.get("required", False)
-    ph     = field.get("placeholder", "")
-    wkey   = f"wiz_{key}"
-    dlabel = f"{label} *" if req else label
-    sv     = saved.get(key)
+    key     = field["key"]
+    label   = field.get("label", key)
+    req     = field.get("required", False)
+    ph      = field.get("placeholder", "")
+    default = field.get("default", "")
+    wkey    = f"wiz_s{step_idx}_{key}"
+    dlabel  = f"{label} *" if req else label
+    # Use saved value if available, otherwise fall back to JSON default
+    sv      = saved.get(key) if saved.get(key) is not None else (default or None)
 
     if ftype in ("text", "cpf"):
         return st.text_input(dlabel, value=sv or "", placeholder=ph, key=wkey)
@@ -1052,7 +1054,14 @@ if st.session_state.contract_id is None:
                          use_container_width=True, type="primary"):
                 st.session_state.contract_id = contract["_id"]
                 st.session_state.wizard_step = 0
-                st.session_state.wizard_values = {}
+                # Seed wizard_values with any JSON defaults so they pre-fill correctly
+                defaults = {
+                    f["key"]: f["default"]
+                    for s in contract.get("sections", [])
+                    for f in s.get("fields", [])
+                    if "default" in f and f.get("type") not in ("derived", "currency_written")
+                }
+                st.session_state.wizard_values = defaults
                 st.rerun()
     st.stop()
 
