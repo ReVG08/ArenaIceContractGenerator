@@ -141,10 +141,11 @@ def build_filename(contract: dict, context: dict) -> str:
  
  
 # ─────────────────────────────────────────────
-# FIELD RENDERER
+# FIELD RENDERER (outside form — for wizard)
 # ─────────────────────────────────────────────
  
-def render_field(field: dict, form_key: str, saved: dict = None):
+def render_field_free(field: dict, saved: dict):
+    """Render a field outside st.form using unique session-state keys."""
     ftype  = field.get("type", "text")
     if ftype == "derived":
         return None
@@ -152,26 +153,29 @@ def render_field(field: dict, form_key: str, saved: dict = None):
     label  = field.get("label", key)
     req    = field.get("required", False)
     ph     = field.get("placeholder", "")
-    wkey   = f"{form_key}_{key}"
+    wkey   = f"wiz_{key}"
     dlabel = f"{label} *" if req else label
-    sv     = (saved or {}).get(key)
+    sv     = saved.get(key)
  
     if ftype in ("text", "cpf"):
         return st.text_input(dlabel, value=sv or "", placeholder=ph, key=wkey)
     if ftype == "textarea":
-        return st.text_area(dlabel, value=sv or "", placeholder=ph, height=90, key=wkey)
+        return st.text_area(dlabel, value=sv or "", placeholder=ph, height=100, key=wkey)
     if ftype == "number":
-        return st.number_input(dlabel, min_value=0, value=int(sv) if sv else None,
+        return st.number_input(dlabel, min_value=0,
+                               value=int(sv) if sv is not None else None,
                                step=1, placeholder=ph, key=wkey)
     if ftype == "currency":
-        return st.number_input(dlabel, min_value=0.0, value=float(sv) if sv else None,
+        return st.number_input(dlabel, min_value=0.0,
+                               value=float(sv) if sv is not None else None,
                                step=50.0, format="%.2f", placeholder=ph, key=wkey)
     if ftype == "date":
         past   = field.get("past_only", False)
         future = field.get("future_only", False)
         mn  = date(1920,1,1) if past else (date.today() if future else date(1920,1,1))
         mx  = date.today() if past else None
-        kw  = {"value": sv if sv else None, "min_value": mn, "format": "DD/MM/YYYY", "key": wkey}
+        kw  = {"value": sv if sv else None, "min_value": mn,
+               "format": "DD/MM/YYYY", "key": wkey}
         if mx:
             kw["max_value"] = mx
         return st.date_input(dlabel, **kw)
@@ -179,7 +183,7 @@ def render_field(field: dict, form_key: str, saved: dict = None):
         return st.time_input(dlabel, value=sv if sv else None, step=1800, key=wkey)
     if ftype == "select":
         opts = field.get("options", [])
-        idx  = opts.index(sv) if sv in opts else 0
+        idx  = opts.index(sv) if sv in (opts or []) else 0
         return st.selectbox(dlabel, opts, index=idx, key=wkey)
     return st.text_input(dlabel, value=sv or "", placeholder=ph, key=wkey)
  
@@ -217,6 +221,14 @@ def check_time_pairs(contract: dict, raw: dict) -> list:
                          for f in s["fields"] if f["key"] == end_key), end_key)
                     errors.append(f"<b>{end_label}</b> deve ser depois do horario de inicio.")
                 checked.update([field["key"], end_key])
+    return errors
+ 
+def validate_section(section: dict, saved: dict) -> list:
+    errors = []
+    for f in section.get("fields", []):
+        err = validate_raw(f, saved.get(f["key"]))
+        if err:
+            errors.append(err)
     return errors
  
  
@@ -279,7 +291,7 @@ def inject_css(cfg: dict, theme: str):
     r_b   = cfg["border_radius_button"]
  
     if theme == "dark":
-        footer_bg  = f"linear-gradient(90deg,{bg_from}f0 0%,{bg_mid}f0 100%)"
+        footer_bg  = f"linear-gradient(90deg,{bg_from}f2 0%,{bg_mid}f2 100%)"
         footer_b   = "rgba(96,165,250,0.1)"
         ghost_bg   = "rgba(255,255,255,0.05)"
         ghost_b    = "rgba(96,165,250,0.2)"
@@ -289,22 +301,24 @@ def inject_css(cfg: dict, theme: str):
         ghost_hc   = "#e8f0fe"
         divider_c  = "rgba(96,165,250,0.1)"
         section_b  = "rgba(96,165,250,0.08)"
-        pill_bg    = f"rgba(96,165,250,0.08)"
-        pill_b     = "rgba(96,165,250,0.2)"
-        pill_c     = "#7bafd4"
-        active_pill_bg = f"{acc}22"
-        active_pill_b  = f"{acc}55"
-        active_pill_c  = "#fff"
-        done_pill_bg   = f"{acc_s}18"
-        done_pill_b    = f"{acc_s}44"
-        done_pill_c    = f"{acc_s}"
+        step_inactive_bg  = "rgba(255,255,255,0.04)"
+        step_inactive_b   = "rgba(96,165,250,0.15)"
+        step_inactive_c   = "#4a6a9a"
+        step_active_bg    = f"{acc}22"
+        step_active_b     = f"{acc}66"
+        step_active_c     = "#fff"
+        step_done_bg      = f"{acc_s}18"
+        step_done_b       = f"{acc_s}50"
+        step_done_c       = acc_s
         err_bg  = "rgba(239,68,68,0.08)"
         err_b   = "rgba(239,68,68,0.25)"
         err_c   = "#fca5a5"
         err_li  = "#f87171"
         warn_c  = "#fbbf24"
-        mesh_c1 = f"{acc}18"
-        mesh_c2 = f"{acc_s}10"
+        mesh_c1 = f"{acc}14"
+        mesh_c2 = f"{acc_s}0d"
+        track_bg = "rgba(96,165,250,0.1)"
+        track_fill = acc
     else:
         footer_bg  = f"linear-gradient(90deg,{bg_mid}f8 0%,{bg_from}f8 100%)"
         footer_b   = "rgba(0,0,0,0.07)"
@@ -316,63 +330,61 @@ def inject_css(cfg: dict, theme: str):
         ghost_hc   = acc
         divider_c  = "rgba(0,0,0,0.07)"
         section_b  = "rgba(0,0,0,0.06)"
-        pill_bg    = "rgba(0,0,0,0.04)"
-        pill_b     = "rgba(0,0,0,0.1)"
-        pill_c     = "#6b7fa3"
-        active_pill_bg = f"{acc}15"
-        active_pill_b  = f"{acc}44"
-        active_pill_c  = acc
-        done_pill_bg   = f"{acc_s}12"
-        done_pill_b    = f"{acc_s}40"
-        done_pill_c    = "#0b8f5c"
+        step_inactive_bg  = "rgba(0,0,0,0.03)"
+        step_inactive_b   = "rgba(0,0,0,0.1)"
+        step_inactive_c   = "#8a9abf"
+        step_active_bg    = f"{acc}12"
+        step_active_b     = f"{acc}44"
+        step_active_c     = acc
+        step_done_bg      = f"{acc_s}10"
+        step_done_b       = f"{acc_s}40"
+        step_done_c       = "#0b8f5c"
         err_bg  = "rgba(220,38,38,0.05)"
         err_b   = "rgba(220,38,38,0.18)"
         err_c   = "#dc2626"
         err_li  = "#b91c1c"
         warn_c  = "#92400e"
-        mesh_c1 = f"{acc}0a"
-        mesh_c2 = f"{acc_s}08"
+        mesh_c1 = f"{acc}08"
+        mesh_c2 = f"{acc_s}07"
+        track_bg = "rgba(0,0,0,0.07)"
+        track_fill = acc
  
     st.markdown(f"""
 <style>
 @import url('{gurl}');
  
-/* ─── Reset & base ─── */
 html, body, [class*="css"] {{ font-family: '{fb}', sans-serif !important; }}
 #MainMenu, footer, header {{ visibility: hidden; }}
 section[data-testid="stSidebar"] {{ display: none !important; }}
  
-/* ─── App background with mesh ─── */
 .stApp {{
     background:
-        radial-gradient(ellipse at 20% 20%, {mesh_c1} 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, {mesh_c2} 0%, transparent 50%),
+        radial-gradient(ellipse at 15% 15%, {mesh_c1} 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 85%, {mesh_c2} 0%, transparent 55%),
         linear-gradient(135deg, {bg_from} 0%, {bg_mid} 50%, {bg_to} 100%);
     min-height: 100vh;
 }}
- 
-/* ─── Content container ─── */
 .block-container {{
     padding-top: 0 !important;
-    padding-bottom: 80px !important;
-    max-width: 1100px !important;
+    padding-bottom: 100px !important;
+    max-width: 1000px !important;
 }}
  
-/* ─── Typography ─── */
 h1,h2,h3 {{ font-family: '{fh}', sans-serif !important; color: {t_main} !important; }}
  
-/* ─── Form labels ─── */
+/* ── Labels ── */
 label, .stTextInput label, .stNumberInput label,
 .stSelectbox label, .stDateInput label,
 .stTimeInput label, .stTextArea label {{
     color: {t_label} !important;
-    font-size: 0.72rem !important;
+    font-size: 0.71rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.08em !important;
     text-transform: uppercase !important;
+    margin-bottom: 4px !important;
 }}
  
-/* ─── Inputs ─── */
+/* ── Inputs ── */
 .stTextInput input, .stNumberInput input, [data-baseweb="input"] input {{
     background: {inp_bg} !important;
     border: 1.5px solid {inp_b} !important;
@@ -382,14 +394,14 @@ label, .stTextInput label, .stNumberInput label,
     font-family: '{fb}', sans-serif !important;
     font-size: 0.9rem !important;
     transition: border-color 0.18s, box-shadow 0.18s !important;
-    padding: 10px 14px !important;
 }}
 .stTextInput input:focus, [data-baseweb="input"] input:focus {{
     border-color: {acc} !important;
     box-shadow: 0 0 0 3px {acc}1a !important;
+    outline: none !important;
 }}
 .stTextInput input::placeholder, [data-baseweb="input"] input::placeholder {{
-    color: {t_sub} !important; opacity: 0.55 !important;
+    color: {t_sub} !important; opacity: 0.5 !important;
 }}
 .stTextArea textarea {{
     background: {inp_bg} !important;
@@ -410,7 +422,6 @@ label, .stTextInput label, .stNumberInput label,
     border: 1.5px solid {inp_b} !important;
     border-radius: {r_i} !important;
     color: {t_main} !important;
-    transition: border-color 0.18s !important;
 }}
 [data-baseweb="select"] span, [data-baseweb="select"] div,
 [data-baseweb="select"] input, [data-baseweb="base-input"],
@@ -422,14 +433,11 @@ label, .stTextInput label, .stNumberInput label,
     background: transparent !important;
 }}
 .stNumberInput button {{ color: {t_main} !important; }}
-[data-baseweb="menu"] li, [data-baseweb="menu"] div {{
-    background: {inp_bg} !important; color: {t_main} !important;
-}}
+[data-baseweb="menu"] li {{ background: {inp_bg} !important; color: {t_main} !important; }}
 [data-baseweb="option"]:hover {{ background: {acc}18 !important; }}
  
-/* ─── Primary button ─── */
-.stButton button[kind="primary"],
-.stFormSubmitButton button[kind="primary"] {{
+/* ── Primary button ── */
+.stButton button[kind="primary"] {{
     background: linear-gradient(135deg, {acc} 0%, {acc_h} 100%) !important;
     border: none !important;
     border-radius: {r_b} !important;
@@ -437,22 +445,17 @@ label, .stTextInput label, .stNumberInput label,
     font-family: '{fb}', sans-serif !important;
     font-size: 0.88rem !important;
     font-weight: 600 !important;
-    letter-spacing: 0.04em !important;
-    padding: 10px 20px !important;
+    letter-spacing: 0.03em !important;
     transition: all 0.2s ease !important;
     box-shadow: 0 4px 16px {acc}44 !important;
 }}
-.stButton button[kind="primary"]:hover,
-.stFormSubmitButton button[kind="primary"]:hover {{
+.stButton button[kind="primary"]:hover {{
     transform: translateY(-2px) !important;
     box-shadow: 0 8px 28px {acc}66 !important;
 }}
-.stButton button[kind="primary"]:active,
-.stFormSubmitButton button[kind="primary"]:active {{
+.stButton button[kind="primary"]:active {{
     transform: translateY(0) scale(0.98) !important;
 }}
- 
-/* ─── Secondary button ─── */
 .stButton button[kind="secondary"] {{
     background: {ghost_bg} !important;
     border: 1.5px solid {ghost_b} !important;
@@ -469,8 +472,6 @@ label, .stTextInput label, .stNumberInput label,
     color: {ghost_hc} !important;
     transform: translateY(-1px) !important;
 }}
- 
-/* ─── Download button ─── */
 .stDownloadButton button {{
     background: linear-gradient(135deg, {acc_s} 0%, {acc_sh} 100%) !important;
     border: none !important;
@@ -486,13 +487,13 @@ label, .stTextInput label, .stNumberInput label,
     box-shadow: 0 8px 28px {acc_s}66 !important;
 }}
  
-/* ─── Misc ─── */
+/* ── Misc ── */
 .stAlert {{ border-radius: {r_c} !important; border: none !important; }}
 hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
-.stCaption, small {{ color: {t_sub} !important; font-size: 0.75rem !important; }}
+.stCaption, small {{ color: {t_sub} !important; font-size: 0.73rem !important; }}
 .stSpinner > div {{ border-top-color: {acc} !important; }}
  
-/* ─── Sticky footer ─── */
+/* ── Sticky footer ── */
 .sticky-footer {{
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -512,10 +513,10 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     border-radius: 8px;
     color: {ghost_c};
     font-family: '{fb}', sans-serif;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 500;
-    padding: 6px 16px;
-    transition: all 0.18s ease;
+    padding: 6px 14px;
+    transition: all 0.18s;
     text-decoration: none;
     white-space: nowrap;
 }}
@@ -525,51 +526,47 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     color: {ghost_hc};
 }}
  
-/* ─── Top bar ─── */
+/* ── Top bar ── */
 .top-bar {{
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 0 16px;
+    padding: 20px 0 18px;
     border-bottom: 1px solid {divider_c};
-    margin-bottom: 32px;
+    margin-bottom: 36px;
 }}
-.top-bar-brand {{
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}}
+.top-bar-left {{ display: flex; align-items: center; gap: 12px; }}
 .top-bar-name {{
     font-family: '{fh}', sans-serif;
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 700;
     color: {t_main};
-    letter-spacing: -0.01em;
     margin: 0;
+    letter-spacing: -0.01em;
 }}
 .top-bar-sub {{
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: {t_sub};
-    margin: 1px 0 0;
-    letter-spacing: 0.04em;
+    margin: 2px 0 0;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     font-weight: 500;
 }}
  
-/* ─── Selection screen ─── */
+/* ── Select screen ── */
 .select-heading {{
     font-family: '{fh}', sans-serif;
-    font-size: 2rem;
+    font-size: 2.1rem;
     font-weight: 800;
     color: {t_main};
     margin: 0 0 8px;
     letter-spacing: -0.03em;
+    line-height: 1.2;
 }}
 .select-sub {{
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     color: {t_sub};
     margin: 0 0 40px;
-    line-height: 1.6;
 }}
 .contract-card {{
     background: {surface};
@@ -584,162 +581,181 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 .contract-card::before {{
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, {acc}, {acc_s});
+    inset: 0;
+    background: linear-gradient(135deg, {acc}0a 0%, transparent 60%);
     opacity: 0;
     transition: opacity 0.22s;
-    border-radius: {r_c} {r_c} 0 0;
+    border-radius: {r_c};
 }}
-.contract-card:hover {{
-    border-color: {acc}55;
-    box-shadow: 0 16px 48px {acc}18;
-    transform: translateY(-5px);
-}}
-.contract-card:hover::before {{ opacity: 1; }}
-.contract-card-icon {{
-    font-size: 2.6rem;
-    margin-bottom: 16px;
-    display: block;
-}}
+.contract-card:hover {{ border-color:{acc}55; box-shadow:0 16px 48px {acc}18; transform:translateY(-5px); }}
+.contract-card:hover::before {{ opacity:1; }}
+.contract-card-icon {{ font-size:2.8rem; margin-bottom:16px; display:block; }}
 .contract-card-name {{
-    font-family: '{fh}', sans-serif !important;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: {t_main} !important;
-    margin: 0 0 8px;
-    letter-spacing: -0.01em;
+    font-family:'{fh}',sans-serif !important;
+    font-size:1.05rem; font-weight:700;
+    color:{t_main} !important; margin:0 0 8px;
 }}
-.contract-card-desc {{
-    font-size: 0.8rem;
-    color: {t_sub} !important;
-    margin: 0;
-    line-height: 1.6;
-}}
+.contract-card-desc {{ font-size:0.8rem; color:{t_sub} !important; margin:0; line-height:1.6; }}
  
-/* ─── Form screen ─── */
-.form-header {{
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+/* ── Wizard progress bar ── */
+.wizard-header {{
     margin-bottom: 28px;
-    gap: 16px;
 }}
-.form-title-wrap {{}}
-.form-title {{
+.wizard-meta {{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}}
+.wizard-title {{
     font-family: '{fh}', sans-serif;
     font-size: 1.5rem;
     font-weight: 800;
     color: {t_main};
-    margin: 0 0 4px;
+    margin: 0;
     letter-spacing: -0.02em;
 }}
-.form-subtitle {{
-    font-size: 0.82rem;
-    color: {t_sub};
-    margin: 0;
-    line-height: 1.5;
-}}
- 
-/* ─── Step progress pills ─── */
-.step-pills {{
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
-    margin-bottom: 28px;
-}}
-.step-pill {{
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    border-radius: 99px;
-    font-family: '{fb}', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    border: 1px solid {pill_b};
-    background: {pill_bg};
-    color: {pill_c};
-    transition: all 0.18s ease;
-    white-space: nowrap;
-}}
-.step-pill.active {{
-    background: {active_pill_bg};
-    border-color: {active_pill_b};
-    color: {active_pill_c};
-    box-shadow: 0 2px 8px {acc}22;
-}}
-.step-pill.done {{
-    background: {done_pill_bg};
-    border-color: {done_pill_b};
-    color: {done_pill_c};
-}}
-.step-pill-dot {{
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-    flex-shrink: 0;
-}}
- 
-/* ─── Section label ─── */
-.section-label {{
-    font-family: '{fh}', sans-serif;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: {t_label};
-    margin-top: 28px;
-    padding-top: 22px;
-    border-top: 1px solid {section_b};
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}}
-.section-icon {{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px; height: 22px;
-    background: {acc}18;
-    border: 1px solid {acc}35;
-    border-radius: 6px;
-    font-size: 0.7rem;
-}}
- 
-/* ─── Breadcrumb ─── */
-.breadcrumb {{
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-}}
-.breadcrumb-root {{ font-size: 0.75rem; color: {t_sub}; cursor: pointer; }}
-.breadcrumb-sep  {{ font-size: 0.75rem; color: {t_sub}; opacity: 0.4; }}
-.breadcrumb-active {{
+.wizard-counter {{
     font-size: 0.75rem;
     font-weight: 600;
-    color: {t_label};
+    color: {t_sub};
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}}
+.progress-track {{
+    height: 4px;
+    background: {track_bg};
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}}
+.progress-fill {{
+    height: 100%;
+    background: linear-gradient(90deg, {track_fill}, {acc_s});
+    border-radius: 99px;
+    transition: width 0.4s cubic-bezier(.22,.68,0,1.2);
+}}
+.step-list {{
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+}}
+.step-list::-webkit-scrollbar {{ display: none; }}
+.step-item {{
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+}}
+.step-btn {{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px 6px 10px;
+    border-radius: 99px;
+    font-family: '{fb}', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border: 1.5px solid {step_inactive_b};
+    background: {step_inactive_bg};
+    color: {step_inactive_c};
+    white-space: nowrap;
+    transition: all 0.18s;
+}}
+.step-btn.active {{
+    background: {step_active_bg};
+    border-color: {step_active_b};
+    color: {step_active_c};
+    box-shadow: 0 2px 10px {acc}22;
+}}
+.step-btn.done {{
+    background: {step_done_bg};
+    border-color: {step_done_b};
+    color: {step_done_c};
+}}
+.step-num {{
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: currentColor;
+    color: transparent;
+    flex-shrink: 0;
+    position: relative;
+}}
+.step-num::after {{
+    content: attr(data-n);
+    position: absolute;
+    color: {bg_from};
+    font-size: 0.62rem;
+    font-weight: 700;
+}}
+.step-num.done-num::after {{ content: '✓'; }}
+.step-connector {{
+    width: 24px; height: 1.5px;
+    background: {step_inactive_b};
+    flex-shrink: 0;
+    margin: 0 -2px;
+}}
+.step-connector.done {{ background: {step_done_b}; }}
+ 
+/* ── Section title inside wizard step ── */
+.section-header {{
+    margin-bottom: 24px;
+}}
+.section-title {{
+    font-family: '{fh}', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: {t_main};
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}}
+.section-icon-lg {{
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    background: {acc}18;
+    border: 1.5px solid {acc}30;
+    border-radius: 9px;
+    font-size: 1rem;
+    flex-shrink: 0;
+}}
+.section-desc {{
+    font-size: 0.8rem;
+    color: {t_sub};
+    margin: 0 0 0 42px;
 }}
  
-/* ─── Confirm voltar ─── */
-.voltar-confirm {{
+/* ── Breadcrumb ── */
+.breadcrumb {{
+    display: flex; align-items: center; gap: 8px; margin-bottom: 24px;
+}}
+.bc-root {{ font-size: 0.73rem; color: {t_sub}; }}
+.bc-sep  {{ font-size: 0.73rem; color: {t_sub}; opacity: 0.35; }}
+.bc-active {{ font-size: 0.73rem; font-weight: 600; color: {t_label}; }}
+ 
+/* ── Confirm voltar ── */
+.voltar-box {{
     background: rgba(251,191,36,0.08);
     border: 1px solid rgba(251,191,36,0.25);
     border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 0.82rem;
+    padding: 10px 14px;
+    font-size: 0.8rem;
     color: {warn_c};
     margin-bottom: 8px;
 }}
  
-/* ─── Success ─── */
+/* ── Success ── */
 .success-card {{
-    background: linear-gradient(135deg, {acc_s}14 0%, {acc_s}06 100%);
+    background: linear-gradient(135deg, {acc_s}12 0%, {acc_s}05 100%);
     border: 1.5px solid {acc_s}40;
     border-radius: {r_c};
     padding: 48px 40px 40px;
@@ -748,88 +764,64 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     position: relative;
     overflow: hidden;
 }}
-.success-card::after {{
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, {acc_s}, {acc});
-    border-radius: {r_c} {r_c} 0 0;
+.success-card::before {{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;
+    height:3px;
+    background:linear-gradient(90deg,{acc_s},{acc});
+    border-radius:{r_c} {r_c} 0 0;
 }}
-.success-icon {{ font-size: 3.2rem; display: block; margin-bottom: 16px; }}
+.success-icon {{ font-size:3.2rem; display:block; margin-bottom:16px; }}
 .success-title {{
-    font-family: '{fh}', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: {t_main};
-    margin: 0 0 6px;
-    letter-spacing: -0.02em;
+    font-family:'{fh}',sans-serif;
+    font-size:1.5rem; font-weight:800;
+    color:{t_main}; margin:0 0 6px;
+    letter-spacing:-0.02em;
 }}
-.success-name {{
-    font-size: 0.88rem;
-    color: {acc_s};
-    font-weight: 500;
-    margin: 0;
-}}
+.success-name {{ font-size:0.88rem; color:{acc_s}; font-weight:500; margin:0; }}
  
-/* ─── Error box ─── */
+/* ── Error box ── */
 .err-box {{
-    background: {err_bg};
-    border: 1px solid {err_b};
-    border-radius: {r_c};
-    padding: 16px 20px;
-    margin-top: 16px;
+    background:{err_bg};
+    border:1px solid {err_b};
+    border-radius:{r_c};
+    padding:14px 18px;
+    margin-top:14px;
 }}
 .err-title {{
-    color: {err_c};
-    font-weight: 600;
-    font-size: 0.82rem;
-    margin: 0 0 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    color:{err_c}; font-weight:600;
+    font-size:0.8rem; margin:0 0 8px;
 }}
 .err-list {{
-    color: {err_li};
-    font-size: 0.8rem;
-    margin: 0;
-    padding-left: 18px;
-    line-height: 1.8;
+    color:{err_li}; font-size:0.78rem;
+    margin:0; padding-left:16px; line-height:1.9;
 }}
  
-/* ─── Login ─── */
-.login-wrap {{
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px 120px;
+/* ── Login ── */
+.login-outer {{
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    min-height:80vh; padding:0 0 80px;
 }}
+.login-logo {{ text-align:center; margin-bottom:28px; }}
 .login-card {{
-    background: {surface};
-    border: 1.5px solid {surf_b};
-    border-radius: 20px;
-    padding: 40px 36px;
-    width: 100%;
-    max-width: 400px;
-    backdrop-filter: blur(20px);
+    background:{surface};
+    border:1.5px solid {surf_b};
+    border-radius:20px;
+    padding:36px 32px 28px;
+    width:100%;
+    backdrop-filter:blur(20px);
 }}
 .login-title {{
-    font-family: '{fh}', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: {t_main};
-    text-align: center;
-    margin: 0 0 6px;
-    letter-spacing: -0.02em;
+    font-family:'{fh}',sans-serif;
+    font-size:1.4rem; font-weight:800;
+    color:{t_main}; text-align:center;
+    margin:0 0 4px; letter-spacing:-0.02em;
 }}
 .login-sub {{
-    font-size: 0.82rem;
-    color: {t_sub};
-    text-align: center;
-    margin: 0 0 28px;
-    line-height: 1.5;
+    font-size:0.8rem; color:{t_sub};
+    text-align:center; margin:0 0 24px;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -864,13 +856,14 @@ inject_css(cfg, st.session_state.theme)
 # ─────────────────────────────────────────────
  
 for k, v in [
-    ("authenticated",    False),
-    ("contract_id",      None),
-    ("confirm_voltar",   False),
+    ("authenticated",     False),
+    ("contract_id",       None),
+    ("wizard_step",       0),
+    ("wizard_values",     {}),
+    ("confirm_voltar",    False),
     ("generated_docx",   None),
     ("generated_filename", None),
-    ("show_preview",     False),
-    ("saved_form_values", {}),
+    ("show_preview",      False),
 ]:
     if k not in st.session_state:
         st.session_state[k] = v
@@ -881,19 +874,19 @@ for k, v in [
 # ─────────────────────────────────────────────
  
 if not st.session_state.authenticated:
-    st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
- 
-    _, col, _ = st.columns([1, 1.4, 1])
+    _, col, _ = st.columns([1, 1.2, 1])
     with col:
+        st.markdown("<div style='height:10vh'></div>", unsafe_allow_html=True)
+ 
         if LOGO_B64:
-            st.markdown(f"""<div style="text-align:center;margin-bottom:28px;">
+            st.markdown(f"""<div class="login-logo">
                 <img src="data:image/png;base64,{LOGO_B64}"
-                     style="max-width:160px;width:100%;"/>
+                     style="max-width:150px;width:100%;"/>
             </div>""", unsafe_allow_html=True)
         else:
-            st.markdown(f"""<div style="text-align:center;margin-bottom:28px;">
+            st.markdown(f"""<div class="login-logo">
                 <span style="font-family:'{cfg['font_heading']}',sans-serif;
-                    font-size:1.6rem;font-weight:800;color:{cfg.get('dark_text_main','#e8f0fe')};">
+                    font-size:1.6rem;font-weight:800;">
                     {cfg['app_name']}
                 </span>
             </div>""", unsafe_allow_html=True)
@@ -903,7 +896,8 @@ if not st.session_state.authenticated:
             <p class="login-sub">{cfg['app_subtitle']}</p>
         </div>""", unsafe_allow_html=True)
  
-        pw = st.text_input("Senha", type="password", placeholder="Digite sua senha",
+        pw = st.text_input("Senha de acesso", type="password",
+                           placeholder="Digite sua senha",
                            label_visibility="collapsed")
         st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
  
@@ -911,10 +905,10 @@ if not st.session_state.authenticated:
             if pw == cfg["password"]:
                 st.session_state.authenticated = True
                 st.rerun()
-            else:
+            elif pw:
                 st.error("Senha incorreta.")
  
-        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
         tc1, tc2 = st.columns(2)
         with tc1:
             if st.button("☀️ Claro", use_container_width=True):
@@ -923,7 +917,6 @@ if not st.session_state.authenticated:
             if st.button("🌙 Escuro", use_container_width=True):
                 st.session_state.theme = "dark"; st.rerun()
  
-    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
  
  
@@ -931,10 +924,7 @@ if not st.session_state.authenticated:
 # STICKY FOOTER
 # ─────────────────────────────────────────────
  
-t  = st.session_state.theme
-bg = cfg[f"{'dark' if t=='dark' else 'light'}_bg_from"]
-tm = cfg[f"{'dark' if t=='dark' else 'light'}_text_main"]
- 
+tm = cfg[f"{'dark' if st.session_state.theme=='dark' else 'light'}_text_main"]
 logo_html = (
     f'<img src="data:image/png;base64,{LOGO_B64}" style="height:28px;opacity:0.9;"/>'
     if LOGO_B64 else
@@ -954,11 +944,11 @@ st.markdown(f"""<div class="sticky-footer">
 tb1, tb2 = st.columns([5, 1])
 with tb1:
     logo_top = (
-        f'<img src="data:image/png;base64,{LOGO_B64}" style="height:32px;"/>'
+        f'<img src="data:image/png;base64,{LOGO_B64}" style="height:30px;"/>'
         if LOGO_B64 else ""
     )
     st.markdown(f"""<div class="top-bar">
-        <div class="top-bar-brand">
+        <div class="top-bar-left">
             {logo_top}
             <div>
                 <p class="top-bar-name">{cfg['app_name']}</p>
@@ -968,8 +958,8 @@ with tb1:
     </div>""", unsafe_allow_html=True)
 with tb2:
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-    tlabel = "☀️ Claro" if st.session_state.theme == "dark" else "🌙 Escuro"
-    if st.button(tlabel, use_container_width=True):
+    tl = "☀️ Claro" if st.session_state.theme == "dark" else "🌙 Escuro"
+    if st.button(tl, use_container_width=True):
         st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
         st.rerun()
  
@@ -981,21 +971,19 @@ with tb2:
 if st.session_state.contract_id is None:
     st.session_state.update(
         confirm_voltar=False, generated_docx=None,
-        generated_filename=None, show_preview=False
+        generated_filename=None, show_preview=False,
+        wizard_step=0, wizard_values={}
     )
  
-    st.markdown(f"""
+    st.markdown("""
     <p class="select-heading">Gerar contrato</p>
     <p class="select-sub">Selecione o tipo de contrato que deseja criar.</p>
     """, unsafe_allow_html=True)
  
-    n    = len(contracts)
-    cols = st.columns(max(n, 1), gap="large")
- 
+    cols = st.columns(max(len(contracts), 1), gap="large")
     for i, contract in enumerate(contracts):
         with cols[i % len(cols)]:
-            st.markdown(f"""
-            <div class="contract-card">
+            st.markdown(f"""<div class="contract-card">
                 <span class="contract-card-icon">{contract.get('icon','📄')}</span>
                 <p class="contract-card-name">{contract['name']}</p>
                 <p class="contract-card-desc">{contract.get('description','')}</p>
@@ -1004,8 +992,9 @@ if st.session_state.contract_id is None:
             if st.button("Selecionar  →", key=f"sel_{contract['_id']}",
                          use_container_width=True, type="primary"):
                 st.session_state.contract_id = contract["_id"]
+                st.session_state.wizard_step = 0
+                st.session_state.wizard_values = {}
                 st.rerun()
- 
     st.stop()
  
  
@@ -1018,6 +1007,9 @@ if active is None:
     st.error("Contrato nao encontrado.")
     st.session_state.contract_id = None
     st.rerun()
+ 
+sections   = active.get("sections", [])
+total_steps = len(sections)
  
  
 # ─────────────────────────────────────────────
@@ -1043,164 +1035,206 @@ if st.session_state.generated_docx is not None:
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
     with c2:
-        plabel = "🙈  Fechar preview" if st.session_state.show_preview else "👁  Visualizar"
-        if st.button(plabel, use_container_width=True):
+        pl = "🙈  Fechar preview" if st.session_state.show_preview else "👁  Visualizar"
+        if st.button(pl, use_container_width=True):
             st.session_state.show_preview = not st.session_state.show_preview
             st.rerun()
     with c3:
         if st.button("✏️  Editar", use_container_width=True):
+            # Go back to last wizard step with values pre-filled
             st.session_state.update(
                 generated_docx=None, generated_filename=None,
-                show_preview=False, confirm_voltar=False
+                show_preview=False, wizard_step=total_steps - 1
             )
             st.rerun()
     with c4:
         if st.button("📝  Novo", use_container_width=True):
             st.session_state.update(
                 generated_docx=None, generated_filename=None,
-                show_preview=False, contract_id=None, saved_form_values={}
+                show_preview=False, contract_id=None,
+                wizard_step=0, wizard_values={}
             )
             st.rerun()
  
     if st.session_state.show_preview:
         st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
         show_contract_preview(docx_bytes)
- 
     st.stop()
  
  
 # ─────────────────────────────────────────────
-# BREADCRUMB + BACK
+# BREADCRUMB
 # ─────────────────────────────────────────────
  
-bc, cc = st.columns([2, 5])
-with bc:
-    if not st.session_state.confirm_voltar:
-        if st.button("← Voltar", key="btn_voltar"):
-            st.session_state.confirm_voltar = True
-            st.rerun()
-    else:
-        st.markdown('<div class="voltar-confirm">⚠️ Perder os dados preenchidos?</div>',
-                    unsafe_allow_html=True)
-        x1, x2 = st.columns(2)
-        with x1:
-            if st.button("Sim, voltar", use_container_width=True):
-                st.session_state.update(contract_id=None, confirm_voltar=False,
-                                        saved_form_values={})
-                st.rerun()
-        with x2:
-            if st.button("Cancelar", use_container_width=True):
-                st.session_state.confirm_voltar = False
-                st.rerun()
+st.markdown(f"""<div class="breadcrumb">
+    <span class="bc-root">Contratos</span>
+    <span class="bc-sep">›</span>
+    <span class="bc-root">{active.get('icon','')} {active['name']}</span>
+    <span class="bc-sep">›</span>
+    <span class="bc-active">{sections[st.session_state.wizard_step]['label']}</span>
+</div>""", unsafe_allow_html=True)
  
-with cc:
-    st.markdown(f"""<div class="breadcrumb" style="padding-top:8px;">
-        <span class="breadcrumb-root">Contratos</span>
-        <span class="breadcrumb-sep">›</span>
-        <span class="breadcrumb-active">{active.get('icon','')} {active['name']}</span>
-    </div>""", unsafe_allow_html=True)
+ 
+# ─────────────────────────────────────────────
+# WIZARD PROGRESS HEADER
+# ─────────────────────────────────────────────
+ 
+step_idx   = st.session_state.wizard_step
+pct        = int(((step_idx) / total_steps) * 100)
+cur_section = sections[step_idx]
+ 
+# Build step list HTML
+steps_html = '<div class="step-list">'
+for i, sec in enumerate(sections):
+    is_done   = i < step_idx
+    is_active = i == step_idx
+    cls = "done" if is_done else ("active" if is_active else "")
+    num_cls = "done-num" if is_done else ""
+    num_content = "✓" if is_done else str(i + 1)
+    connector_cls = "done" if i < step_idx else ""
+ 
+    steps_html += f"""<div class="step-item">
+        <div class="step-btn {cls}">
+            <span class="step-num {num_cls}" data-n="{num_content}"></span>
+            {sec['label']}
+        </div>
+    </div>"""
+    if i < total_steps - 1:
+        steps_html += f'<div class="step-connector {connector_cls}"></div>'
+steps_html += "</div>"
+ 
+st.markdown(f"""<div class="wizard-header">
+    <div class="wizard-meta">
+        <p class="wizard-title">{active.get('icon','')} {active['name']}</p>
+        <span class="wizard-counter">Etapa {step_idx + 1} de {total_steps}</span>
+    </div>
+    <div class="progress-track">
+        <div class="progress-fill" style="width:{pct}%"></div>
+    </div>
+    {steps_html}
+</div>""", unsafe_allow_html=True)
  
 st.markdown('<hr/>', unsafe_allow_html=True)
-st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
  
  
 # ─────────────────────────────────────────────
-# FORM HEADER + STEP PILLS
+# CURRENT STEP FIELDS
 # ─────────────────────────────────────────────
  
-sections     = active.get("sections", [])
-total_secs   = len(sections)
-saved        = st.session_state.saved_form_values
+st.markdown(f"""<div class="section-header">
+    <p class="section-title">
+        <span class="section-icon-lg">{cur_section.get('icon','')}</span>
+        {cur_section['label']}
+    </p>
+</div>""", unsafe_allow_html=True)
  
-# Build step pills — a section is "done" if all its required fields have saved values
-def section_done(section: dict) -> bool:
-    for f in section.get("fields", []):
-        if f.get("required") and f.get("type") != "derived":
-            v = saved.get(f["key"])
-            if v is None or (isinstance(v, str) and not v.strip()):
-                return False
-    return bool(saved)  # only show done if form was previously submitted
+visible = [f for f in cur_section.get("fields", []) if f.get("type") != "derived"]
+step_raw = {}
  
-pills_html = '<div class="step-pills">'
-for i, sec in enumerate(sections):
-    is_done = section_done(sec)
-    cls  = "done" if is_done else "step-pill"
-    dot  = "✓" if is_done else f"{i+1}"
-    pills_html += f'<span class="step-pill {cls}"><span class="step-pill-dot" style="{"width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0" if not is_done else ""}"></span>{sec["label"]}</span>'
-pills_html += "</div>"
+i = 0
+while i < len(visible):
+    batch = visible[i:i + 3]
+    cols  = st.columns(len(batch))
+    for col, field in zip(cols, batch):
+        with col:
+            step_raw[field["key"]] = render_field_free(
+                field, st.session_state.wizard_values
+            )
+    i += 3
  
-st.markdown(f"""
-<div style="margin:20px 0 4px;">
-    <p class="form-title">{active.get('icon','')} {active['name']}</p>
-    <p class="form-subtitle">{active.get('description','')}</p>
-</div>
-{pills_html}
-""", unsafe_allow_html=True)
+st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+st.caption("* Campos obrigatorios")
+st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
  
  
 # ─────────────────────────────────────────────
-# DYNAMIC FORM
+# WIZARD NAVIGATION
 # ─────────────────────────────────────────────
  
-form_key   = f"form_{active['_id']}"
-raw_values = {}
+is_last = (step_idx == total_steps - 1)
  
-with st.form(form_key):
-    for section in sections:
-        st.markdown(f"""<div class="section-label">
-            <span class="section-icon">{section.get('icon','')}</span>
-            {section['label']}
-        </div>""", unsafe_allow_html=True)
+nav_left, nav_right = st.columns([1, 1])
  
-        visible = [f for f in section.get("fields", []) if f.get("type") != "derived"]
- 
-        i = 0
-        while i < len(visible):
-            batch = visible[i:i + 3]
-            cols  = st.columns(len(batch))
-            for col, field in zip(cols, batch):
-                with col:
-                    raw_values[field["key"]] = render_field(
-                        field, form_key, st.session_state.saved_form_values
+with nav_left:
+    if step_idx == 0:
+        # First step — back goes to contract selection
+        if not st.session_state.confirm_voltar:
+            if st.button("← Trocar contrato", use_container_width=True):
+                st.session_state.confirm_voltar = True
+                st.rerun()
+        else:
+            st.markdown('<div class="voltar-box">⚠️ Perder os dados preenchidos?</div>',
+                        unsafe_allow_html=True)
+            cx1, cx2 = st.columns(2)
+            with cx1:
+                if st.button("Sim", use_container_width=True):
+                    st.session_state.update(
+                        contract_id=None, confirm_voltar=False,
+                        wizard_step=0, wizard_values={}
                     )
-            i += 3
- 
-    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
-    st.caption("* Campos obrigatorios")
-    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-    submit = st.form_submit_button(
-        "Gerar contrato  →", type="primary", use_container_width=True
-    )
- 
- 
-# ─────────────────────────────────────────────
-# SUBMISSION
-# ─────────────────────────────────────────────
- 
-if submit:
-    all_fields = {
-        f["key"]: f
-        for s in active.get("sections", [])
-        for f in s.get("fields", [])
-    }
-    errors  = [e for k, v in raw_values.items()
-               if (e := validate_raw(all_fields.get(k, {}), v))]
-    errors += check_time_pairs(active, raw_values)
- 
-    if errors:
-        items = "".join(f"<li>{e}</li>" for e in errors)
-        st.markdown(f"""<div class="err-box">
-            <p class="err-title">⚠️ Corrija os campos abaixo antes de continuar</p>
-            <ul class="err-list">{items}</ul>
-        </div>""", unsafe_allow_html=True)
+                    st.rerun()
+            with cx2:
+                if st.button("Cancelar", use_container_width=True):
+                    st.session_state.confirm_voltar = False
+                    st.rerun()
     else:
-        try:
-            context  = build_context(active, raw_values)
-            tpl_path = resolve_template(active["template"], active["_id"])
-            st.session_state.generated_docx     = render_docx(tpl_path, context)
-            st.session_state.generated_filename  = build_filename(active, context)
-            st.session_state.saved_form_values   = raw_values
-            st.session_state.show_preview        = False
+        if st.button("← Etapa anterior", use_container_width=True):
+            # Save current step values before going back
+            st.session_state.wizard_values.update(step_raw)
+            st.session_state.wizard_step -= 1
+            st.session_state.confirm_voltar = False
             st.rerun()
-        except FileNotFoundError:
-            st.error(f"Template '{active['template']}' nao encontrado em contracts/.")
+ 
+with nav_right:
+    if not is_last:
+        if st.button("Proxima etapa  →", use_container_width=True, type="primary"):
+            # Validate this step
+            errors = []
+            all_fields_map = {f["key"]: f for f in cur_section.get("fields", [])}
+            for k, v in step_raw.items():
+                err = validate_raw(all_fields_map.get(k, {}), v)
+                if err:
+                    errors.append(err)
+ 
+            if errors:
+                items = "".join(f"<li>{e}</li>" for e in errors)
+                st.markdown(f"""<div class="err-box">
+                    <p class="err-title">⚠️ Corrija antes de continuar</p>
+                    <ul class="err-list">{items}</ul>
+                </div>""", unsafe_allow_html=True)
+            else:
+                st.session_state.wizard_values.update(step_raw)
+                st.session_state.wizard_step += 1
+                st.session_state.confirm_voltar = False
+                st.rerun()
+    else:
+        if st.button("Gerar contrato  →", use_container_width=True, type="primary"):
+            # Merge last step and validate everything
+            all_values = {**st.session_state.wizard_values, **step_raw}
+            all_fields_map = {
+                f["key"]: f
+                for s in sections
+                for f in s.get("fields", [])
+            }
+            errors  = [e for k, v in all_values.items()
+                       if (e := validate_raw(all_fields_map.get(k, {}), v))]
+            errors += check_time_pairs(active, all_values)
+ 
+            if errors:
+                items = "".join(f"<li>{e}</li>" for e in errors)
+                st.markdown(f"""<div class="err-box">
+                    <p class="err-title">⚠️ Corrija os campos abaixo</p>
+                    <ul class="err-list">{items}</ul>
+                </div>""", unsafe_allow_html=True)
+            else:
+                try:
+                    context  = build_context(active, all_values)
+                    tpl_path = resolve_template(active["template"], active["_id"])
+                    st.session_state.generated_docx     = render_docx(tpl_path, context)
+                    st.session_state.generated_filename  = build_filename(active, context)
+                    st.session_state.wizard_values       = all_values
+                    st.session_state.show_preview        = False
+                    st.rerun()
+                except FileNotFoundError:
+                    st.error(f"Template '{active['template']}' nao encontrado em contracts/.")
