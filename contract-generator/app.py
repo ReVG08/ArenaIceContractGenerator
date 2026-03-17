@@ -60,10 +60,10 @@ def load_app_config() -> dict:
         "light_text_label":     "#3a5a9a",
         "light_input_bg":       "#ffffff",
         "light_input_border":   "rgba(0,0,0,0.12)",
-        "font_heading":         "Sora",
-        "font_body":            "DM Sans",
-        "font_google_url":      "https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700;800&display=swap",
-        "border_radius_card":   "20px",
+        "font_heading":         "Plus Jakarta Sans",
+        "font_body":            "Inter",
+        "font_google_url":      "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap",
+        "border_radius_card":   "16px",
         "border_radius_input":  "10px",
         "border_radius_button": "10px",
     }
@@ -92,90 +92,6 @@ def load_contracts() -> list:
 def format_brl(value: float) -> str:
     return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
  
- 
-def format_brl_written(value: float) -> str:
-    """Return the written Portuguese form of a BRL value.
-    E.g. 2500.00 -> 'dois mil e quinhentos reais'
-         1500.50 -> 'mil e quinhentos reais e cinquenta centavos'
-    """
-    ones      = ["", "um", "dois", "tres", "quatro", "cinco", "seis", "sete",
-                 "oito", "nove", "dez", "onze", "doze", "treze", "quatorze",
-                 "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"]
-    tens      = ["", "", "vinte", "trinta", "quarenta", "cinquenta",
-                 "sessenta", "setenta", "oitenta", "noventa"]
-    hundreds  = ["", "cem", "duzentos", "trezentos", "quatrocentos",
-                 "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"]
- 
-    def _under_1000(n: int) -> str:
-        if n == 0:
-            return ""
-        if n == 100:
-            return "cem"
-        parts = []
-        if n >= 100:
-            parts.append(hundreds[n // 100])
-            n %= 100
-        if n >= 20:
-            t = tens[n // 10]
-            r = ones[n % 10]
-            parts.append(f"{t} e {r}" if r else t)
-        elif n > 0:
-            parts.append(ones[n])
-        return " e ".join(p for p in parts if p)
- 
-    def _chunk(n: int, singular: str, plural: str) -> str:
-        s = _under_1000(n)
-        if not s:
-            return ""
-        label = singular if n == 1 else plural
-        return f"{s} {label}"
- 
-    value   = round(value, 2)
-    reais   = int(value)
-    cents   = round((value - reais) * 100)
- 
-    if reais == 0 and cents == 0:
-        return "zero reais"
- 
-    parts = []
- 
-    bilhoes  = reais // 1_000_000_000
-    milhoens = (reais % 1_000_000_000) // 1_000_000
-    milhares = (reais % 1_000_000) // 1_000
-    resto    = reais % 1_000
- 
-    if bilhoes:
-        parts.append(_chunk(bilhoes, "bilhao", "bilhoes"))
-    if milhoens:
-        parts.append(_chunk(milhoens, "milhao", "milhoes"))
-    if milhares:
-        # In Portuguese, "mil" not "um mil"
-        s = _under_1000(milhares)
-        if milhares == 1:
-            parts.append("mil")
-        elif s:
-            parts.append(f"{s} mil")
-    if resto:
-        parts.append(_under_1000(resto))
- 
-    reais_str = " e ".join(p for p in parts if p)
-    if reais > 0:
-        reais_label = "real" if reais == 1 else "reais"
-        reais_str   = f"{reais_str} {reais_label}"
-    else:
-        reais_str = ""
- 
-    if cents > 0:
-        cents_label = "centavo" if cents == 1 else "centavos"
-        cents_str   = f"{_under_1000(cents)} {cents_label}"
-    else:
-        cents_str = ""
- 
-    if reais_str and cents_str:
-        return f"{reais_str} e {cents_str}"
-    return reais_str or cents_str
- 
- 
 def get_logo_b64(filename: str) -> str:
     try:
         with open(os.path.join(BASE_DIR, filename), "rb") as f:
@@ -183,28 +99,15 @@ def get_logo_b64(filename: str) -> str:
     except FileNotFoundError:
         return ""
  
- 
 def resolve_template(template_filename: str, contract_id: str) -> str:
-    """
-    Search for the template file in this order:
-    1. contracts/<filename>
-    2. <root>/<filename>
-    3. contracts/<contract_id>.docx  (fallback by contract id)
-    Raises FileNotFoundError with a helpful message if not found.
-    """
-    candidates = [
+    for path in [
         os.path.join(CONTRACTS_DIR, template_filename),
         os.path.join(BASE_DIR, template_filename),
         os.path.join(CONTRACTS_DIR, f"{contract_id}.docx"),
-    ]
-    for path in candidates:
+    ]:
         if os.path.exists(path):
             return path
-    checked = "\n  ".join(candidates)
-    raise FileNotFoundError(
-        f"Template '{template_filename}' not found. Checked:\n  {checked}"
-    )
- 
+    raise FileNotFoundError(f"Template '{template_filename}' not found.")
  
 def render_docx(template_path: str, context: dict) -> bytes:
     doc = DocxTemplate(template_path)
@@ -217,49 +120,16 @@ def render_docx(template_path: str, context: dict) -> bytes:
     finally:
         os.unlink(tmp.name)
  
- 
-def docx_to_html(docx_bytes: bytes) -> str:
-    import mammoth, io
-    result = mammoth.convert_to_html(io.BytesIO(docx_bytes))
-    return result.value
- 
- 
-def docx_to_pdf(docx_bytes: bytes) -> bytes | None:
-    """
-    Try to convert docx -> HTML -> PDF via weasyprint.
-    Returns PDF bytes on success, None if weasyprint or its
-    system dependencies are unavailable.
-    """
-    try:
-        import weasyprint, io
-        html_content = docx_to_html(docx_bytes)
-        full_html = f"""<!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
-  body {{ font-family: 'DM Sans', Arial, sans-serif; font-size: 13px;
-         line-height: 1.7; color: #111; margin: 60px 80px; }}
-  table {{ width: 100%; border-collapse: collapse; margin: 12px 0; }}
-  td, th {{ border: 1px solid #ddd; padding: 6px 10px; }}
-  p {{ margin: 6px 0; }}
-</style>
-</head><body>{html_content}</body></html>"""
-        pdf_bytes = weasyprint.HTML(string=full_html).write_pdf()
-        return pdf_bytes
-    except Exception:
-        return None
- 
- 
 def show_contract_preview(docx_bytes: bytes):
+    import mammoth, io
     with st.spinner("Gerando pre-visualizacao..."):
-        html_content = docx_to_html(docx_bytes)
+        result = mammoth.convert_to_html(io.BytesIO(docx_bytes))
     st.markdown(f"""
     <div style="background:#fff;padding:60px 80px;max-width:860px;margin:0 auto;
-        font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.7;color:#111;
-        border:1px solid #ddd;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.15);">
-        {html_content}
+        font-family:'Inter',sans-serif;font-size:14px;line-height:1.8;color:#111;
+        border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.12);">
+        {result.value}
     </div>""", unsafe_allow_html=True)
- 
  
 def build_filename(contract: dict, context: dict) -> str:
     parts = [
@@ -271,522 +141,11 @@ def build_filename(contract: dict, context: dict) -> str:
  
  
 # ─────────────────────────────────────────────
-# CSS INJECTION (fully config-driven)
-# ─────────────────────────────────────────────
- 
-def inject_css(cfg: dict, theme: str):
-    p = "dark_" if theme == "dark" else "light_"
- 
-    bg_from  = cfg[f"{p}bg_from"]
-    bg_mid   = cfg[f"{p}bg_mid"]
-    bg_to    = cfg[f"{p}bg_to"]
-    surface  = cfg[f"{p}surface"]
-    surf_b   = cfg[f"{p}surface_border"]
-    t_main   = cfg[f"{p}text_main"]
-    t_sub    = cfg[f"{p}text_sub"]
-    t_label  = cfg[f"{p}text_label"]
-    inp_bg   = cfg[f"{p}input_bg"]
-    inp_b    = cfg[f"{p}input_border"]
-    inp_c    = t_main
- 
-    acc      = cfg["accent_color"]
-    acc_h    = cfg["accent_hover"]
-    acc_s    = cfg["accent_success"]
-    acc_sh   = cfg["accent_success_hover"]
-    fh       = cfg["font_heading"]
-    fb       = cfg["font_body"]
-    gurl     = cfg["font_google_url"]
-    r_card   = cfg["border_radius_card"]
-    r_input  = cfg["border_radius_input"]
-    r_btn    = cfg["border_radius_button"]
- 
-    if theme == "dark":
-        footer_bg    = f"linear-gradient(90deg,{bg_from} 0%,{bg_mid} 100%)"
-        footer_b     = "rgba(96,165,250,0.12)"
-        ghost_bg     = "rgba(255,255,255,0.05)"
-        ghost_b      = "rgba(96,165,250,0.25)"
-        ghost_c      = "#a8c4f0"
-        ghost_hbg    = "rgba(96,165,250,0.1)"
-        ghost_hb     = "rgba(96,165,250,0.5)"
-        ghost_hc     = "#e8f0fe"
-        section_b    = "rgba(96,165,250,0.1)"
-        divider_c    = "rgba(96,165,250,0.12)"
-        err_bg       = "rgba(255,80,80,0.08)"
-        err_b        = "rgba(255,80,80,0.25)"
-        err_c        = "#ff8080"
-        err_li       = "#cc6060"
-        crumb_c      = "#3a5a8a"
-        crumb_sep    = "#2a3a5c"
-        crumb_active = "#7bafd4"
-        warn_c       = "#e8c060"
-        login_card   = f"background:rgba(255,255,255,0.03);border:1px solid rgba(96,165,250,0.15);"
-    else:
-        footer_bg    = f"linear-gradient(90deg,{bg_mid} 0%,{bg_from} 100%)"
-        footer_b     = "rgba(0,0,0,0.08)"
-        ghost_bg     = "rgba(0,0,0,0.03)"
-        ghost_b      = "rgba(0,0,0,0.15)"
-        ghost_c      = "#3a5a9a"
-        ghost_hbg    = "rgba(29,106,255,0.06)"
-        ghost_hb     = "rgba(29,106,255,0.3)"
-        ghost_hc     = "#1d3a8a"
-        section_b    = "rgba(0,0,0,0.07)"
-        divider_c    = "rgba(0,0,0,0.07)"
-        err_bg       = "rgba(220,30,30,0.05)"
-        err_b        = "rgba(220,30,30,0.2)"
-        err_c        = "#cc2222"
-        err_li       = "#993333"
-        crumb_c      = "#8a9abf"
-        crumb_sep    = "#c0cce0"
-        crumb_active = "#3a5a9a"
-        warn_c       = "#996600"
-        login_card   = f"background:#fff;border:1px solid rgba(0,0,0,0.08);"
- 
-    st.markdown(f"""
-<style>
-@import url('{gurl}');
- 
-/* ── Keyframe animations ── */
-@keyframes fadeSlideUp {{
-    from {{ opacity: 0; transform: translateY(18px); }}
-    to   {{ opacity: 1; transform: translateY(0); }}
-}}
-@keyframes fadeIn {{
-    from {{ opacity: 0; }}
-    to   {{ opacity: 1; }}
-}}
-@keyframes pulseGlow {{
-    0%, 100% {{ box-shadow: 0 0 0 0 {acc}44; }}
-    50%       {{ box-shadow: 0 0 0 8px {acc}00; }}
-}}
-@keyframes successPop {{
-    0%   {{ transform: scale(0.85); opacity: 0; }}
-    60%  {{ transform: scale(1.04); opacity: 1; }}
-    100% {{ transform: scale(1); }}
-}}
-@keyframes shimmer {{
-    0%   {{ background-position: -400px 0; }}
-    100% {{ background-position: 400px 0; }}
-}}
-@keyframes cardFloat {{
-    0%, 100% {{ transform: translateY(0px); }}
-    50%       {{ transform: translateY(-4px); }}
-}}
- 
-/* ── Custom cursor ── */
-*, *::before, *::after {{
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='4' fill='{acc.replace('#','%23')}' opacity='0.9'/%3E%3Ccircle cx='12' cy='12' r='8' fill='none' stroke='{acc.replace('#','%23')}' stroke-width='1.5' opacity='0.4'/%3E%3C/svg%3E") 12 12, auto !important;
-}}
-button, a, [role="button"], .stButton button, .stDownloadButton button,
-.stFormSubmitButton button, .footer-sair-btn, .contract-card {{
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='6' fill='{acc.replace('#','%23')}' opacity='1'/%3E%3Ccircle cx='14' cy='14' r='11' fill='none' stroke='{acc.replace('#','%23')}' stroke-width='1.5' opacity='0.6'/%3E%3C/svg%3E") 14 14, pointer !important;
-}}
-input, textarea, select {{
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='24' viewBox='0 0 20 24'%3E%3Crect x='9' y='0' width='2' height='24' fill='{acc.replace('#','%23')}' rx='1'/%3E%3Crect x='4' y='0' width='12' height='3' fill='{acc.replace('#','%23')}' rx='1'/%3E%3Crect x='4' y='21' width='12' height='3' fill='{acc.replace('#','%23')}' rx='1'/%3E%3C/svg%3E") 10 12, text !important;
-}}
- 
-/* ── Base ── */
-html, body, [class*="css"] {{ font-family: '{fb}', sans-serif !important; }}
-.stApp {{
-    background: linear-gradient(135deg, {bg_from} 0%, {bg_mid} 50%, {bg_to} 100%);
-    min-height: 100vh;
-    animation: fadeIn 0.4s ease;
-}}
- 
-#MainMenu, footer, header {{ visibility: hidden; }}
-.block-container {{
-    padding-top: 2rem !important;
-    padding-bottom: 80px !important;
-    animation: fadeSlideUp 0.45s cubic-bezier(.22,.68,0,1.2) both;
-}}
-section[data-testid="stSidebar"] {{ display: none !important; }}
- 
-h1,h2,h3 {{ font-family: '{fh}', sans-serif !important; color: {t_main} !important; }}
-p, span, div {{ color: {t_main}; }}
- 
-/* ── Labels ── */
-label, .stTextInput label, .stNumberInput label,
-.stSelectbox label, .stDateInput label,
-.stTimeInput label, .stTextArea label {{
-    color: {t_label} !important;
-    font-size: 0.78rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.07em !important;
-    text-transform: uppercase !important;
-    transition: color 0.2s !important;
-}}
- 
-/* ── Inputs ── */
-.stTextInput input, .stNumberInput input, [data-baseweb="input"] input {{
-    background: {inp_bg} !important;
-    border: 1px solid {inp_b} !important;
-    border-radius: {r_input} !important;
-    color: {inp_c} !important;
-    font-family: '{fb}', sans-serif !important;
-    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s !important;
-    -webkit-text-fill-color: {inp_c} !important;
-}}
-.stTextInput input:focus, .stNumberInput input:focus, [data-baseweb="input"] input:focus {{
-    border-color: {acc} !important;
-    box-shadow: 0 0 0 3px {acc}22 !important;
-    -webkit-text-fill-color: {inp_c} !important;
-}}
-.stTextInput input::placeholder, .stNumberInput input::placeholder,
-[data-baseweb="input"] input::placeholder {{
-    color: {t_sub} !important;
-    opacity: 0.6 !important;
-}}
-.stTextArea textarea {{
-    background: {inp_bg} !important;
-    border: 1px solid {inp_b} !important;
-    border-radius: {r_input} !important;
-    color: {inp_c} !important;
-    -webkit-text-fill-color: {inp_c} !important;
-    font-family: '{fb}', sans-serif !important;
-    transition: border-color 0.2s, box-shadow 0.2s !important;
-}}
-.stTextArea textarea:focus {{
-    border-color: {acc} !important;
-    box-shadow: 0 0 0 3px {acc}22 !important;
-}}
-.stTextArea textarea::placeholder {{
-    color: {t_sub} !important;
-    opacity: 0.6 !important;
-}}
-[data-baseweb="select"] > div {{
-    background: {inp_bg} !important;
-    border: 1px solid {inp_b} !important;
-    border-radius: {r_input} !important;
-    color: {inp_c} !important;
-    transition: border-color 0.2s !important;
-}}
-[data-baseweb="select"] span,
-[data-baseweb="select"] div,
-[data-baseweb="select"] input {{
-    color: {inp_c} !important;
-    -webkit-text-fill-color: {inp_c} !important;
-}}
-[data-baseweb="base-input"] {{
-    background: {inp_bg} !important;
-    border-radius: {r_input} !important;
-    color: {inp_c} !important;
-    -webkit-text-fill-color: {inp_c} !important;
-}}
-[data-baseweb="base-input"] > div,
-[data-baseweb="base-input"] input,
-[data-baseweb="base-input"] span {{
-    color: {inp_c} !important;
-    -webkit-text-fill-color: {inp_c} !important;
-    background: transparent !important;
-}}
-[data-baseweb="input"] div, [data-baseweb="input"] span {{
-    color: {inp_c} !important;
-    -webkit-text-fill-color: {inp_c} !important;
-}}
-.stNumberInput button {{ color: {inp_c} !important; }}
-[data-baseweb="menu"] li, [data-baseweb="menu"] div {{
-    background: {inp_bg} !important;
-    color: {inp_c} !important;
-}}
-[data-baseweb="option"]:hover {{ background: {acc}22 !important; }}
- 
-/* ── Buttons ── */
-.stButton button[kind="primary"],
-.stFormSubmitButton button[kind="primary"] {{
-    background: linear-gradient(135deg, {acc} 0%, {acc_h} 100%) !important;
-    border: none !important;
-    border-radius: {r_btn} !important;
-    color: #fff !important;
-    font-family: '{fb}', sans-serif !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.04em !important;
-    transition: all 0.22s cubic-bezier(.22,.68,0,1.2) !important;
-    box-shadow: 0 4px 20px {acc}55 !important;
-    position: relative !important;
-    overflow: hidden !important;
-}}
-.stButton button[kind="primary"]:hover,
-.stFormSubmitButton button[kind="primary"]:hover {{
-    transform: translateY(-2px) scale(1.01) !important;
-    box-shadow: 0 8px 32px {acc}88 !important;
-}}
-.stButton button[kind="primary"]:active,
-.stFormSubmitButton button[kind="primary"]:active {{
-    transform: translateY(0) scale(0.98) !important;
-}}
-.stButton button[kind="secondary"] {{
-    background: {ghost_bg} !important;
-    border: 1px solid {ghost_b} !important;
-    border-radius: {r_btn} !important;
-    color: {ghost_c} !important;
-    font-family: '{fb}', sans-serif !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
-}}
-.stButton button[kind="secondary"]:hover {{
-    background: {ghost_hbg} !important;
-    border-color: {ghost_hb} !important;
-    color: {ghost_hc} !important;
-    transform: translateY(-1px) !important;
-}}
-.stDownloadButton button {{
-    background: linear-gradient(135deg, {acc_s} 0%, {acc_sh} 100%) !important;
-    border: none !important;
-    border-radius: {r_btn} !important;
-    color: #fff !important;
-    font-family: '{fb}', sans-serif !important;
-    font-weight: 600 !important;
-    box-shadow: 0 4px 20px {acc_s}55 !important;
-    transition: all 0.22s cubic-bezier(.22,.68,0,1.2) !important;
-}}
-.stDownloadButton button:hover {{
-    transform: translateY(-2px) scale(1.01) !important;
-    box-shadow: 0 8px 32px {acc_s}88 !important;
-}}
- 
-/* ── Misc ── */
-.stAlert {{ border-radius: {r_card} !important; border: none !important; animation: fadeSlideUp 0.3s ease; }}
-hr {{ border-color: {divider_c} !important; }}
-.stCaption, small {{ color: {t_sub} !important; }}
-.stSpinner > div {{ border-top-color: {acc} !important; }}
- 
-/* ── Sticky footer ── */
-.sticky-footer {{
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    z-index: 999;
-    background: {footer_bg};
-    border-top: 1px solid {footer_b};
-    padding: 10px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 20px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-}}
-.footer-sair-btn {{
-    background: {ghost_bg};
-    border: 1px solid {ghost_b};
-    border-radius: 8px;
-    color: {ghost_c};
-    font-family: '{fb}', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 500;
-    padding: 7px 18px;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    letter-spacing: 0.02em;
-}}
-.footer-sair-btn:hover {{
-    background: {ghost_hbg};
-    border-color: {ghost_hb};
-    color: {ghost_hc};
-    transform: translateY(-1px);
-}}
- 
-/* ── Section label ── */
-.section-label {{
-    font-family: '{fh}', sans-serif;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: {t_label};
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid {section_b};
-    margin-bottom: 18px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: fadeSlideUp 0.3s ease both;
-}}
-.section-label span {{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px; height: 22px;
-    background: {acc}20;
-    border: 1px solid {acc}40;
-    border-radius: 6px;
-    font-size: 0.72rem;
-    transition: background 0.2s, transform 0.2s;
-}}
-.section-label:hover span {{
-    background: {acc}35;
-    transform: scale(1.1);
-}}
- 
-/* ── Contract selection cards ── */
-.contract-card {{
-    background: {surface};
-    border: 1px solid {surf_b};
-    border-radius: {r_card};
-    padding: 40px 32px 32px;
-    text-align: center;
-    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
-    animation: fadeSlideUp 0.4s cubic-bezier(.22,.68,0,1.2) both;
-}}
-.contract-card:hover {{
-    border-color: {acc}88;
-    box-shadow: 0 12px 40px {acc}22;
-    transform: translateY(-4px);
-}}
-.contract-card-icon {{
-    font-size: 2.8rem;
-    margin-bottom: 16px;
-    display: block;
-    animation: cardFloat 3s ease-in-out infinite;
-}}
-.contract-card-name {{
-    font-family: '{fh}', sans-serif !important;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: {t_main} !important;
-    margin: 0 0 10px;
-    letter-spacing: -0.01em;
-}}
-.contract-card-desc {{
-    font-size: 0.82rem;
-    color: {t_sub} !important;
-    margin: 0;
-    line-height: 1.6;
-}}
- 
-/* ── Success card ── */
-.success-card {{
-    background: linear-gradient(135deg, {acc_s}18, {acc_s}06);
-    border: 1px solid {acc_s}50;
-    border-radius: {r_card};
-    padding: 40px;
-    text-align: center;
-    margin-bottom: 28px;
-    animation: successPop 0.5s cubic-bezier(.22,.68,0,1.2) both;
-}}
-.success-icon {{
-    font-size: 3rem;
-    margin-bottom: 14px;
-    display: block;
-    animation: successPop 0.6s cubic-bezier(.22,.68,0,1.2) 0.1s both;
-}}
- 
-/* ── Typography helpers ── */
-.page-title {{
-    font-family: '{fh}', sans-serif;
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: {t_main};
-    margin: 0;
-    letter-spacing: -0.02em;
-    animation: fadeSlideUp 0.4s ease both;
-}}
-.page-subtitle {{
-    font-size: 0.85rem;
-    color: {t_sub};
-    margin: 4px 0 0;
-    animation: fadeSlideUp 0.4s ease 0.05s both;
-}}
-.form-title {{
-    font-family: '{fh}', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: {t_main};
-    margin: 0 0 4px;
-    animation: fadeSlideUp 0.35s ease both;
-}}
-.form-subtitle {{
-    font-size: 0.82rem;
-    color: {t_sub};
-    margin: 0 0 24px;
-    animation: fadeSlideUp 0.35s ease 0.05s both;
-}}
-.success-title {{
-    font-family: '{fh}', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: {t_main};
-    margin: 0 0 6px;
-}}
-.success-sub {{ font-size: 0.9rem; color: {acc_s}; margin: 0; font-weight: 500; }}
-.warn-text {{ font-size: 0.8rem; color: {warn_c}; margin-bottom: 8px; font-weight: 500; }}
-.err-box {{
-    background: {err_bg};
-    border: 1px solid {err_b};
-    border-radius: {r_card};
-    padding: 16px 20px;
-    margin-top: 12px;
-    animation: fadeSlideUp 0.3s ease both;
-}}
-.err-title {{ color: {err_c}; font-weight: 600; margin: 0 0 8px; font-size: 0.85rem; }}
-.err-list {{ color: {err_li}; font-size: 0.82rem; margin: 0; padding-left: 18px; line-height: 1.8; }}
-.crumb-root {{ font-size: 0.75rem; color: {crumb_c}; }}
-.crumb-sep  {{ font-size: 0.75rem; color: {crumb_sep}; }}
-.crumb-active {{ font-size: 0.75rem; font-weight: 600; color: {crumb_active}; }}
- 
-/* ── Login card ── */
-.login-card {{
-    {login_card}
-    border-radius: {r_card};
-    padding: 40px 36px 32px;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    animation: fadeSlideUp 0.5s cubic-bezier(.22,.68,0,1.2) both;
-}}
-.login-title {{
-    font-family: '{fh}', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: {t_main};
-    text-align: center;
-    margin: 0 0 6px;
-}}
-.login-sub {{ font-size: 0.85rem; color: {t_sub}; text-align: center; margin: 0 0 28px; }}
- 
-/* ── Scrollbar ── */
-::-webkit-scrollbar {{ width: 6px; height: 6px; }}
-::-webkit-scrollbar-track {{ background: transparent; }}
-::-webkit-scrollbar-thumb {{
-    background: {acc}44;
-    border-radius: 99px;
-}}
-::-webkit-scrollbar-thumb:hover {{ background: {acc}88; }}
- 
-/* ── Selection highlight ── */
-::selection {{ background: {acc}44; color: {t_main}; }}
- 
-/* ── Breadcrumb ── */
-.crumb-root {{ font-size: 0.75rem; color: {crumb_c}; }}
-.crumb-sep  {{ font-size: 0.75rem; color: {crumb_sep}; }}
-.crumb-active {{ font-size: 0.75rem; font-weight: 600; color: {crumb_active}; }}
- 
-/* ── Login card ── */
-.login-card {{
-    {login_card}
-    border-radius: {r_card};
-    padding: 40px 36px 32px;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    animation: fadeSlideUp 0.5s cubic-bezier(.22,.68,0,1.2) both;
-}}
-.login-title {{
-    font-family: '{fh}', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: {t_main};
-    text-align: center;
-    margin: 0 0 6px;
-}}
-.login-sub {{ font-size: 0.85rem; color: {t_sub}; text-align: center; margin: 0 0 28px; }}
-</style>
-""", unsafe_allow_html=True)
- 
- 
-# ─────────────────────────────────────────────
 # FIELD RENDERER
 # ─────────────────────────────────────────────
  
 def render_field(field: dict, form_key: str, saved: dict = None):
-    ftype = field.get("type", "text")
+    ftype  = field.get("type", "text")
     if ftype == "derived":
         return None
     key    = field["key"]
@@ -795,10 +154,8 @@ def render_field(field: dict, form_key: str, saved: dict = None):
     ph     = field.get("placeholder", "")
     wkey   = f"{form_key}_{key}"
     dlabel = f"{label} *" if req else label
-    sv     = (saved or {}).get(key)  # saved value from previous submission
+    sv     = (saved or {}).get(key)
  
-    if ftype == "currency_written":
-        return None  # auto-derived from paired currency field in build_context
     if ftype in ("text", "cpf"):
         return st.text_input(dlabel, value=sv or "", placeholder=ph, key=wkey)
     if ftype == "textarea":
@@ -814,16 +171,15 @@ def render_field(field: dict, form_key: str, saved: dict = None):
         future = field.get("future_only", False)
         mn  = date(1920,1,1) if past else (date.today() if future else date(1920,1,1))
         mx  = date.today() if past else None
-        val = sv if sv else None
-        kw  = {"value": val, "min_value": mn, "format": "DD/MM/YYYY", "key": wkey}
+        kw  = {"value": sv if sv else None, "min_value": mn, "format": "DD/MM/YYYY", "key": wkey}
         if mx:
             kw["max_value"] = mx
         return st.date_input(dlabel, **kw)
     if ftype == "time":
         return st.time_input(dlabel, value=sv if sv else None, step=1800, key=wkey)
     if ftype == "select":
-        opts  = field.get("options", [])
-        idx   = opts.index(sv) if sv in opts else 0
+        opts = field.get("options", [])
+        idx  = opts.index(sv) if sv in opts else 0
         return st.selectbox(dlabel, opts, index=idx, key=wkey)
     return st.text_input(dlabel, value=sv or "", placeholder=ph, key=wkey)
  
@@ -837,8 +193,6 @@ def validate_raw(field: dict, value) -> str | None:
     label = field.get("label", field["key"])
     if ftype == "derived":
         return None
-    if ftype in ("derived", "currency_written"):
-        return None
     if field.get("required"):
         if value is None:
             return f"<b>{label}</b> e obrigatorio."
@@ -849,7 +203,6 @@ def validate_raw(field: dict, value) -> str | None:
     if ftype == "cpf" and value and not CPF_RE.match(str(value).strip()):
         return f"<b>{label}</b> deve estar no formato 123.456.789-00."
     return None
- 
  
 def check_time_pairs(contract: dict, raw: dict) -> list:
     errors, checked = [], set()
@@ -872,11 +225,7 @@ def check_time_pairs(contract: dict, raw: dict) -> list:
 # ─────────────────────────────────────────────
  
 def build_context(contract: dict, raw: dict) -> dict:
-    all_fields = {
-        f["key"]: f
-        for s in contract.get("sections", [])
-        for f in s.get("fields", [])
-    }
+    all_fields = {f["key"]: f for s in contract.get("sections", []) for f in s.get("fields", [])}
     ctx = {}
     for key, value in raw.items():
         field = all_fields.get(key, {})
@@ -886,20 +235,604 @@ def build_context(contract: dict, raw: dict) -> dict:
             continue
         if ftype == "date":
             ctx[key] = value.strftime("%d/%m/%Y")
-            derive_key = field.get("derive_weekday")
-            if derive_key:
-                ctx[derive_key] = WEEKDAYS_PT[value.weekday()]
+            dk = field.get("derive_weekday")
+            if dk:
+                ctx[dk] = WEEKDAYS_PT[value.weekday()]
         elif ftype == "time":
             ctx[key] = value.strftime("%H:%M")
         elif ftype == "currency":
-            fval = float(value)
-            ctx[key]               = format_brl(fval)
-            ctx[f"{key}_written"]  = format_brl_written(fval)
+            ctx[key] = format_brl(float(value))
         elif ftype == "number":
             ctx[key] = int(value)
         else:
             ctx[key] = value
     return ctx
+ 
+ 
+# ─────────────────────────────────────────────
+# CSS INJECTION
+# ─────────────────────────────────────────────
+ 
+def inject_css(cfg: dict, theme: str):
+    p = "dark_" if theme == "dark" else "light_"
+ 
+    bg_from = cfg[f"{p}bg_from"]
+    bg_mid  = cfg[f"{p}bg_mid"]
+    bg_to   = cfg[f"{p}bg_to"]
+    surface = cfg[f"{p}surface"]
+    surf_b  = cfg[f"{p}surface_border"]
+    t_main  = cfg[f"{p}text_main"]
+    t_sub   = cfg[f"{p}text_sub"]
+    t_label = cfg[f"{p}text_label"]
+    inp_bg  = cfg[f"{p}input_bg"]
+    inp_b   = cfg[f"{p}input_border"]
+ 
+    acc   = cfg["accent_color"]
+    acc_h = cfg["accent_hover"]
+    acc_s = cfg["accent_success"]
+    acc_sh= cfg["accent_success_hover"]
+    fh    = cfg["font_heading"]
+    fb    = cfg["font_body"]
+    gurl  = cfg["font_google_url"]
+    r_c   = cfg["border_radius_card"]
+    r_i   = cfg["border_radius_input"]
+    r_b   = cfg["border_radius_button"]
+ 
+    if theme == "dark":
+        footer_bg  = f"linear-gradient(90deg,{bg_from}f0 0%,{bg_mid}f0 100%)"
+        footer_b   = "rgba(96,165,250,0.1)"
+        ghost_bg   = "rgba(255,255,255,0.05)"
+        ghost_b    = "rgba(96,165,250,0.2)"
+        ghost_c    = "#a8c4f0"
+        ghost_hbg  = "rgba(96,165,250,0.12)"
+        ghost_hb   = "rgba(96,165,250,0.45)"
+        ghost_hc   = "#e8f0fe"
+        divider_c  = "rgba(96,165,250,0.1)"
+        section_b  = "rgba(96,165,250,0.08)"
+        pill_bg    = f"rgba(96,165,250,0.08)"
+        pill_b     = "rgba(96,165,250,0.2)"
+        pill_c     = "#7bafd4"
+        active_pill_bg = f"{acc}22"
+        active_pill_b  = f"{acc}55"
+        active_pill_c  = "#fff"
+        done_pill_bg   = f"{acc_s}18"
+        done_pill_b    = f"{acc_s}44"
+        done_pill_c    = f"{acc_s}"
+        err_bg  = "rgba(239,68,68,0.08)"
+        err_b   = "rgba(239,68,68,0.25)"
+        err_c   = "#fca5a5"
+        err_li  = "#f87171"
+        warn_c  = "#fbbf24"
+        mesh_c1 = f"{acc}18"
+        mesh_c2 = f"{acc_s}10"
+    else:
+        footer_bg  = f"linear-gradient(90deg,{bg_mid}f8 0%,{bg_from}f8 100%)"
+        footer_b   = "rgba(0,0,0,0.07)"
+        ghost_bg   = "rgba(0,0,0,0.03)"
+        ghost_b    = "rgba(0,0,0,0.12)"
+        ghost_c    = "#4a6a9a"
+        ghost_hbg  = f"{acc}0a"
+        ghost_hb   = f"{acc}44"
+        ghost_hc   = acc
+        divider_c  = "rgba(0,0,0,0.07)"
+        section_b  = "rgba(0,0,0,0.06)"
+        pill_bg    = "rgba(0,0,0,0.04)"
+        pill_b     = "rgba(0,0,0,0.1)"
+        pill_c     = "#6b7fa3"
+        active_pill_bg = f"{acc}15"
+        active_pill_b  = f"{acc}44"
+        active_pill_c  = acc
+        done_pill_bg   = f"{acc_s}12"
+        done_pill_b    = f"{acc_s}40"
+        done_pill_c    = "#0b8f5c"
+        err_bg  = "rgba(220,38,38,0.05)"
+        err_b   = "rgba(220,38,38,0.18)"
+        err_c   = "#dc2626"
+        err_li  = "#b91c1c"
+        warn_c  = "#92400e"
+        mesh_c1 = f"{acc}0a"
+        mesh_c2 = f"{acc_s}08"
+ 
+    st.markdown(f"""
+<style>
+@import url('{gurl}');
+ 
+/* ─── Reset & base ─── */
+html, body, [class*="css"] {{ font-family: '{fb}', sans-serif !important; }}
+#MainMenu, footer, header {{ visibility: hidden; }}
+section[data-testid="stSidebar"] {{ display: none !important; }}
+ 
+/* ─── App background with mesh ─── */
+.stApp {{
+    background:
+        radial-gradient(ellipse at 20% 20%, {mesh_c1} 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, {mesh_c2} 0%, transparent 50%),
+        linear-gradient(135deg, {bg_from} 0%, {bg_mid} 50%, {bg_to} 100%);
+    min-height: 100vh;
+}}
+ 
+/* ─── Content container ─── */
+.block-container {{
+    padding-top: 0 !important;
+    padding-bottom: 80px !important;
+    max-width: 1100px !important;
+}}
+ 
+/* ─── Typography ─── */
+h1,h2,h3 {{ font-family: '{fh}', sans-serif !important; color: {t_main} !important; }}
+ 
+/* ─── Form labels ─── */
+label, .stTextInput label, .stNumberInput label,
+.stSelectbox label, .stDateInput label,
+.stTimeInput label, .stTextArea label {{
+    color: {t_label} !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+}}
+ 
+/* ─── Inputs ─── */
+.stTextInput input, .stNumberInput input, [data-baseweb="input"] input {{
+    background: {inp_bg} !important;
+    border: 1.5px solid {inp_b} !important;
+    border-radius: {r_i} !important;
+    color: {t_main} !important;
+    -webkit-text-fill-color: {t_main} !important;
+    font-family: '{fb}', sans-serif !important;
+    font-size: 0.9rem !important;
+    transition: border-color 0.18s, box-shadow 0.18s !important;
+    padding: 10px 14px !important;
+}}
+.stTextInput input:focus, [data-baseweb="input"] input:focus {{
+    border-color: {acc} !important;
+    box-shadow: 0 0 0 3px {acc}1a !important;
+}}
+.stTextInput input::placeholder, [data-baseweb="input"] input::placeholder {{
+    color: {t_sub} !important; opacity: 0.55 !important;
+}}
+.stTextArea textarea {{
+    background: {inp_bg} !important;
+    border: 1.5px solid {inp_b} !important;
+    border-radius: {r_i} !important;
+    color: {t_main} !important;
+    -webkit-text-fill-color: {t_main} !important;
+    font-family: '{fb}', sans-serif !important;
+    font-size: 0.9rem !important;
+    transition: border-color 0.18s, box-shadow 0.18s !important;
+}}
+.stTextArea textarea:focus {{
+    border-color: {acc} !important;
+    box-shadow: 0 0 0 3px {acc}1a !important;
+}}
+[data-baseweb="select"] > div {{
+    background: {inp_bg} !important;
+    border: 1.5px solid {inp_b} !important;
+    border-radius: {r_i} !important;
+    color: {t_main} !important;
+    transition: border-color 0.18s !important;
+}}
+[data-baseweb="select"] span, [data-baseweb="select"] div,
+[data-baseweb="select"] input, [data-baseweb="base-input"],
+[data-baseweb="base-input"] > div, [data-baseweb="base-input"] input,
+[data-baseweb="base-input"] span, [data-baseweb="input"] div,
+[data-baseweb="input"] span {{
+    color: {t_main} !important;
+    -webkit-text-fill-color: {t_main} !important;
+    background: transparent !important;
+}}
+.stNumberInput button {{ color: {t_main} !important; }}
+[data-baseweb="menu"] li, [data-baseweb="menu"] div {{
+    background: {inp_bg} !important; color: {t_main} !important;
+}}
+[data-baseweb="option"]:hover {{ background: {acc}18 !important; }}
+ 
+/* ─── Primary button ─── */
+.stButton button[kind="primary"],
+.stFormSubmitButton button[kind="primary"] {{
+    background: linear-gradient(135deg, {acc} 0%, {acc_h} 100%) !important;
+    border: none !important;
+    border-radius: {r_b} !important;
+    color: #fff !important;
+    font-family: '{fb}', sans-serif !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.04em !important;
+    padding: 10px 20px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 16px {acc}44 !important;
+}}
+.stButton button[kind="primary"]:hover,
+.stFormSubmitButton button[kind="primary"]:hover {{
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 28px {acc}66 !important;
+}}
+.stButton button[kind="primary"]:active,
+.stFormSubmitButton button[kind="primary"]:active {{
+    transform: translateY(0) scale(0.98) !important;
+}}
+ 
+/* ─── Secondary button ─── */
+.stButton button[kind="secondary"] {{
+    background: {ghost_bg} !important;
+    border: 1.5px solid {ghost_b} !important;
+    border-radius: {r_b} !important;
+    color: {ghost_c} !important;
+    font-family: '{fb}', sans-serif !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}}
+.stButton button[kind="secondary"]:hover {{
+    background: {ghost_hbg} !important;
+    border-color: {ghost_hb} !important;
+    color: {ghost_hc} !important;
+    transform: translateY(-1px) !important;
+}}
+ 
+/* ─── Download button ─── */
+.stDownloadButton button {{
+    background: linear-gradient(135deg, {acc_s} 0%, {acc_sh} 100%) !important;
+    border: none !important;
+    border-radius: {r_b} !important;
+    color: #fff !important;
+    font-family: '{fb}', sans-serif !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 16px {acc_s}44 !important;
+    transition: all 0.2s ease !important;
+}}
+.stDownloadButton button:hover {{
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 28px {acc_s}66 !important;
+}}
+ 
+/* ─── Misc ─── */
+.stAlert {{ border-radius: {r_c} !important; border: none !important; }}
+hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
+.stCaption, small {{ color: {t_sub} !important; font-size: 0.75rem !important; }}
+.stSpinner > div {{ border-top-color: {acc} !important; }}
+ 
+/* ─── Sticky footer ─── */
+.sticky-footer {{
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 999;
+    background: {footer_bg};
+    border-top: 1px solid {footer_b};
+    padding: 10px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}}
+.footer-sair-btn {{
+    background: {ghost_bg};
+    border: 1px solid {ghost_b};
+    border-radius: 8px;
+    color: {ghost_c};
+    font-family: '{fb}', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 6px 16px;
+    transition: all 0.18s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}}
+.footer-sair-btn:hover {{
+    background: {ghost_hbg};
+    border-color: {ghost_hb};
+    color: {ghost_hc};
+}}
+ 
+/* ─── Top bar ─── */
+.top-bar {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid {divider_c};
+    margin-bottom: 32px;
+}}
+.top-bar-brand {{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}}
+.top-bar-name {{
+    font-family: '{fh}', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: {t_main};
+    letter-spacing: -0.01em;
+    margin: 0;
+}}
+.top-bar-sub {{
+    font-size: 0.72rem;
+    color: {t_sub};
+    margin: 1px 0 0;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 500;
+}}
+ 
+/* ─── Selection screen ─── */
+.select-heading {{
+    font-family: '{fh}', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: {t_main};
+    margin: 0 0 8px;
+    letter-spacing: -0.03em;
+}}
+.select-sub {{
+    font-size: 0.9rem;
+    color: {t_sub};
+    margin: 0 0 40px;
+    line-height: 1.6;
+}}
+.contract-card {{
+    background: {surface};
+    border: 1.5px solid {surf_b};
+    border-radius: {r_c};
+    padding: 36px 28px 28px;
+    text-align: center;
+    transition: border-color 0.22s, box-shadow 0.22s, transform 0.22s;
+    position: relative;
+    overflow: hidden;
+}}
+.contract-card::before {{
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, {acc}, {acc_s});
+    opacity: 0;
+    transition: opacity 0.22s;
+    border-radius: {r_c} {r_c} 0 0;
+}}
+.contract-card:hover {{
+    border-color: {acc}55;
+    box-shadow: 0 16px 48px {acc}18;
+    transform: translateY(-5px);
+}}
+.contract-card:hover::before {{ opacity: 1; }}
+.contract-card-icon {{
+    font-size: 2.6rem;
+    margin-bottom: 16px;
+    display: block;
+}}
+.contract-card-name {{
+    font-family: '{fh}', sans-serif !important;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: {t_main} !important;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+}}
+.contract-card-desc {{
+    font-size: 0.8rem;
+    color: {t_sub} !important;
+    margin: 0;
+    line-height: 1.6;
+}}
+ 
+/* ─── Form screen ─── */
+.form-header {{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    gap: 16px;
+}}
+.form-title-wrap {{}}
+.form-title {{
+    font-family: '{fh}', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: {t_main};
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+}}
+.form-subtitle {{
+    font-size: 0.82rem;
+    color: {t_sub};
+    margin: 0;
+    line-height: 1.5;
+}}
+ 
+/* ─── Step progress pills ─── */
+.step-pills {{
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 28px;
+}}
+.step-pill {{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-family: '{fb}', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 1px solid {pill_b};
+    background: {pill_bg};
+    color: {pill_c};
+    transition: all 0.18s ease;
+    white-space: nowrap;
+}}
+.step-pill.active {{
+    background: {active_pill_bg};
+    border-color: {active_pill_b};
+    color: {active_pill_c};
+    box-shadow: 0 2px 8px {acc}22;
+}}
+.step-pill.done {{
+    background: {done_pill_bg};
+    border-color: {done_pill_b};
+    color: {done_pill_c};
+}}
+.step-pill-dot {{
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}}
+ 
+/* ─── Section label ─── */
+.section-label {{
+    font-family: '{fh}', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: {t_label};
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid {section_b};
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}}
+.section-icon {{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    background: {acc}18;
+    border: 1px solid {acc}35;
+    border-radius: 6px;
+    font-size: 0.7rem;
+}}
+ 
+/* ─── Breadcrumb ─── */
+.breadcrumb {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}}
+.breadcrumb-root {{ font-size: 0.75rem; color: {t_sub}; cursor: pointer; }}
+.breadcrumb-sep  {{ font-size: 0.75rem; color: {t_sub}; opacity: 0.4; }}
+.breadcrumb-active {{
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: {t_label};
+}}
+ 
+/* ─── Confirm voltar ─── */
+.voltar-confirm {{
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.25);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: {warn_c};
+    margin-bottom: 8px;
+}}
+ 
+/* ─── Success ─── */
+.success-card {{
+    background: linear-gradient(135deg, {acc_s}14 0%, {acc_s}06 100%);
+    border: 1.5px solid {acc_s}40;
+    border-radius: {r_c};
+    padding: 48px 40px 40px;
+    text-align: center;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}}
+.success-card::after {{
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, {acc_s}, {acc});
+    border-radius: {r_c} {r_c} 0 0;
+}}
+.success-icon {{ font-size: 3.2rem; display: block; margin-bottom: 16px; }}
+.success-title {{
+    font-family: '{fh}', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: {t_main};
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+}}
+.success-name {{
+    font-size: 0.88rem;
+    color: {acc_s};
+    font-weight: 500;
+    margin: 0;
+}}
+ 
+/* ─── Error box ─── */
+.err-box {{
+    background: {err_bg};
+    border: 1px solid {err_b};
+    border-radius: {r_c};
+    padding: 16px 20px;
+    margin-top: 16px;
+}}
+.err-title {{
+    color: {err_c};
+    font-weight: 600;
+    font-size: 0.82rem;
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}}
+.err-list {{
+    color: {err_li};
+    font-size: 0.8rem;
+    margin: 0;
+    padding-left: 18px;
+    line-height: 1.8;
+}}
+ 
+/* ─── Login ─── */
+.login-wrap {{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px 120px;
+}}
+.login-card {{
+    background: {surface};
+    border: 1.5px solid {surf_b};
+    border-radius: 20px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 400px;
+    backdrop-filter: blur(20px);
+}}
+.login-title {{
+    font-family: '{fh}', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: {t_main};
+    text-align: center;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+}}
+.login-sub {{
+    font-size: 0.82rem;
+    color: {t_sub};
+    text-align: center;
+    margin: 0 0 28px;
+    line-height: 1.5;
+}}
+</style>
+""", unsafe_allow_html=True)
  
  
 # ─────────────────────────────────────────────
@@ -919,7 +852,6 @@ st.set_page_config(
 if "theme" not in st.session_state:
     st.session_state.theme = cfg.get("default_theme", "dark")
  
-# Logout via query param
 if st.query_params.get("sair") == "1":
     st.session_state.clear()
     st.query_params.clear()
@@ -928,24 +860,42 @@ if st.query_params.get("sair") == "1":
 inject_css(cfg, st.session_state.theme)
  
 # ─────────────────────────────────────────────
+# SESSION STATE
+# ─────────────────────────────────────────────
+ 
+for k, v in [
+    ("authenticated",    False),
+    ("contract_id",      None),
+    ("confirm_voltar",   False),
+    ("generated_docx",   None),
+    ("generated_filename", None),
+    ("show_preview",     False),
+    ("saved_form_values", {}),
+]:
+    if k not in st.session_state:
+        st.session_state[k] = v
+ 
+ 
+# ─────────────────────────────────────────────
 # PASSWORD GATE
 # ─────────────────────────────────────────────
  
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
- 
 if not st.session_state.authenticated:
-    _, col, _ = st.columns([1, 1.2, 1])
+    st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
+ 
+    _, col, _ = st.columns([1, 1.4, 1])
     with col:
-        st.markdown("<div style='height:60px'></div>", unsafe_allow_html=True)
         if LOGO_B64:
-            st.markdown(f"""<div style="text-align:center;margin-bottom:32px;">
-                <img src="data:image/png;base64,{LOGO_B64}" style="max-width:180px;width:100%;"/>
+            st.markdown(f"""<div style="text-align:center;margin-bottom:28px;">
+                <img src="data:image/png;base64,{LOGO_B64}"
+                     style="max-width:160px;width:100%;"/>
             </div>""", unsafe_allow_html=True)
         else:
-            st.markdown(f"""<div style="text-align:center;margin-bottom:32px;">
-                <span style="font-family:'{cfg['font_heading']}',sans-serif;font-size:1.5rem;
-                    font-weight:800;">{cfg['app_name']}</span>
+            st.markdown(f"""<div style="text-align:center;margin-bottom:28px;">
+                <span style="font-family:'{cfg['font_heading']}',sans-serif;
+                    font-size:1.6rem;font-weight:800;color:{cfg.get('dark_text_main','#e8f0fe')};">
+                    {cfg['app_name']}
+                </span>
             </div>""", unsafe_allow_html=True)
  
         st.markdown(f"""<div class="login-card">
@@ -953,99 +903,111 @@ if not st.session_state.authenticated:
             <p class="login-sub">{cfg['app_subtitle']}</p>
         </div>""", unsafe_allow_html=True)
  
-        password = st.text_input("Senha", type="password", placeholder="••••••••",
-                                 label_visibility="collapsed")
-        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-        if st.button("Entrar", use_container_width=True, type="primary"):
-            if password == cfg["password"]:
+        pw = st.text_input("Senha", type="password", placeholder="Digite sua senha",
+                           label_visibility="collapsed")
+        st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+ 
+        if st.button("Entrar  →", use_container_width=True, type="primary"):
+            if pw == cfg["password"]:
                 st.session_state.authenticated = True
                 st.rerun()
             else:
                 st.error("Senha incorreta.")
  
-        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
         tc1, tc2 = st.columns(2)
         with tc1:
-            if st.button("☀️ Modo Claro", use_container_width=True):
+            if st.button("☀️ Claro", use_container_width=True):
                 st.session_state.theme = "light"; st.rerun()
         with tc2:
-            if st.button("🌙 Modo Escuro", use_container_width=True):
+            if st.button("🌙 Escuro", use_container_width=True):
                 st.session_state.theme = "dark"; st.rerun()
+ 
+    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
+ 
  
 # ─────────────────────────────────────────────
 # STICKY FOOTER
 # ─────────────────────────────────────────────
  
+t  = st.session_state.theme
+bg = cfg[f"{'dark' if t=='dark' else 'light'}_bg_from"]
+tm = cfg[f"{'dark' if t=='dark' else 'light'}_text_main"]
+ 
 logo_html = (
-    f'<img src="data:image/png;base64,{LOGO_B64}" style="height:32px;opacity:0.88;"/>'
+    f'<img src="data:image/png;base64,{LOGO_B64}" style="height:28px;opacity:0.9;"/>'
     if LOGO_B64 else
     f'<span style="font-family:{cfg["font_heading"]},sans-serif;font-size:0.85rem;'
-    f'font-weight:700;letter-spacing:0.08em;">{cfg["app_name"]}</span>'
+    f'font-weight:700;color:{tm};">{cfg["app_name"]}</span>'
 )
 st.markdown(f"""<div class="sticky-footer">
     {logo_html}
     <a href="?sair=1" class="footer-sair-btn" target="_self">🚪 Sair</a>
 </div>""", unsafe_allow_html=True)
  
-# ─────────────────────────────────────────────
-# SESSION STATE
-# ─────────────────────────────────────────────
- 
-for k, v in [("contract_id", None), ("confirm_voltar", False),
-              ("generated_docx", None), ("generated_filename", None),
-              ("show_preview", False), ("saved_form_values", {})]:
-    if k not in st.session_state:
-        st.session_state[k] = v
  
 # ─────────────────────────────────────────────
-# PAGE HEADER
+# TOP BAR
 # ─────────────────────────────────────────────
  
-hc1, hc2 = st.columns([5, 1])
-with hc1:
-    st.markdown(f"""
-    <p class="page-title">{cfg['app_name']}</p>
-    <p class="page-subtitle">{cfg['app_subtitle']}</p>""", unsafe_allow_html=True)
-with hc2:
+tb1, tb2 = st.columns([5, 1])
+with tb1:
+    logo_top = (
+        f'<img src="data:image/png;base64,{LOGO_B64}" style="height:32px;"/>'
+        if LOGO_B64 else ""
+    )
+    st.markdown(f"""<div class="top-bar">
+        <div class="top-bar-brand">
+            {logo_top}
+            <div>
+                <p class="top-bar-name">{cfg['app_name']}</p>
+                <p class="top-bar-sub">{cfg['app_subtitle']}</p>
+            </div>
+        </div>
+    </div>""", unsafe_allow_html=True)
+with tb2:
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     tlabel = "☀️ Claro" if st.session_state.theme == "dark" else "🌙 Escuro"
     if st.button(tlabel, use_container_width=True):
         st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
         st.rerun()
  
-st.markdown('<hr style="margin:16px 0 24px;"/>', unsafe_allow_html=True)
  
 # ─────────────────────────────────────────────
 # CONTRACT SELECTION
 # ─────────────────────────────────────────────
  
 if st.session_state.contract_id is None:
-    for k in ("confirm_voltar","generated_docx","generated_filename","show_preview"):
-        st.session_state[k] = False if k == "confirm_voltar" else None if k != "show_preview" else False
+    st.session_state.update(
+        confirm_voltar=False, generated_docx=None,
+        generated_filename=None, show_preview=False
+    )
  
-    st.markdown(f"""<p style="font-family:'{cfg['font_heading']}',sans-serif;
-        font-size:0.7rem;font-weight:700;letter-spacing:0.14em;
-        text-transform:uppercase;margin-bottom:20px;">
-        Selecione o tipo de contrato</p>""", unsafe_allow_html=True)
+    st.markdown(f"""
+    <p class="select-heading">Gerar contrato</p>
+    <p class="select-sub">Selecione o tipo de contrato que deseja criar.</p>
+    """, unsafe_allow_html=True)
  
     n    = len(contracts)
-    cols = st.columns(n, gap="large") if n > 1 else st.columns([1, 1])
+    cols = st.columns(max(n, 1), gap="large")
  
     for i, contract in enumerate(contracts):
-        with cols[i]:
-            delay = f"{i * 0.08:.2f}s"
+        with cols[i % len(cols)]:
             st.markdown(f"""
-            <div class="contract-card" style="animation-delay:{delay}">
-                <div class="contract-card-icon">{contract.get('icon','📄')}</div>
+            <div class="contract-card">
+                <span class="contract-card-icon">{contract.get('icon','📄')}</span>
                 <p class="contract-card-name">{contract['name']}</p>
                 <p class="contract-card-desc">{contract.get('description','')}</p>
             </div>""", unsafe_allow_html=True)
-            st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
             if st.button("Selecionar  →", key=f"sel_{contract['_id']}",
                          use_container_width=True, type="primary"):
                 st.session_state.contract_id = contract["_id"]
                 st.rerun()
+ 
     st.stop()
+ 
  
 # ─────────────────────────────────────────────
 # LOAD ACTIVE CONTRACT
@@ -1056,6 +1018,7 @@ if active is None:
     st.error("Contrato nao encontrado.")
     st.session_state.contract_id = None
     st.rerun()
+ 
  
 # ─────────────────────────────────────────────
 # SUCCESS STATE
@@ -1069,94 +1032,111 @@ if st.session_state.generated_docx is not None:
     st.markdown(f"""<div class="success-card">
         <span class="success-icon">✅</span>
         <p class="success-title">Contrato gerado!</p>
-        <p class="success-sub">{name_display}</p>
+        <p class="success-name">{name_display}</p>
     </div>""", unsafe_allow_html=True)
  
-    # Try PDF conversion once and cache result in session state
-    pdf_cache_key = f"pdf_{st.session_state.generated_filename}"
-    if pdf_cache_key not in st.session_state:
-        with st.spinner("Preparando PDF..."):
-            st.session_state[pdf_cache_key] = docx_to_pdf(docx_bytes)
-    pdf_bytes = st.session_state[pdf_cache_key]
- 
-    if pdf_bytes is not None:
-        c1, c2, c3, c4, c5 = st.columns(5, gap="medium")
-    else:
-        c1, c2, c3, c4 = st.columns(4, gap="medium")
- 
+    c1, c2, c3, c4 = st.columns(4, gap="small")
     with c1:
-        st.download_button("📄  Baixar .docx", data=docx_bytes, file_name=filename,
-                           use_container_width=True,
-                           mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
- 
-    if pdf_bytes is not None:
-        with c2:
-            pdf_filename = filename.replace(".docx", ".pdf")
-            st.download_button("📕  Baixar PDF", data=pdf_bytes, file_name=pdf_filename,
-                               use_container_width=True, mime="application/pdf")
+        st.download_button(
+            "📄  Baixar contrato", data=docx_bytes, file_name=filename,
+            use_container_width=True,
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
     with c2:
-        plabel = "🙈  Fechar preview" if st.session_state.show_preview else "👁  Pre-visualizar"
+        plabel = "🙈  Fechar preview" if st.session_state.show_preview else "👁  Visualizar"
         if st.button(plabel, use_container_width=True):
             st.session_state.show_preview = not st.session_state.show_preview
             st.rerun()
     with c3:
-        if st.button("✏️  Editar contrato", use_container_width=True):
-            # Keep contract_id so the form reappears, just clear the generated doc
-            st.session_state.update(generated_docx=None, generated_filename=None,
-                                    show_preview=False, confirm_voltar=False)
+        if st.button("✏️  Editar", use_container_width=True):
+            st.session_state.update(
+                generated_docx=None, generated_filename=None,
+                show_preview=False, confirm_voltar=False
+            )
             st.rerun()
     with c4:
-        if st.button("📝  Novo contrato", use_container_width=True):
-            st.session_state.update(generated_docx=None, generated_filename=None,
-                                    show_preview=False, contract_id=None,
-                                    saved_form_values={})
+        if st.button("📝  Novo", use_container_width=True):
+            st.session_state.update(
+                generated_docx=None, generated_filename=None,
+                show_preview=False, contract_id=None, saved_form_values={}
+            )
             st.rerun()
  
     if st.session_state.show_preview:
-        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
         show_contract_preview(docx_bytes)
+ 
     st.stop()
  
+ 
 # ─────────────────────────────────────────────
-# BACK BUTTON + BREADCRUMB
+# BREADCRUMB + BACK
 # ─────────────────────────────────────────────
  
 bc, cc = st.columns([2, 5])
 with bc:
     if not st.session_state.confirm_voltar:
-        if st.button("← Voltar"):
+        if st.button("← Voltar", key="btn_voltar"):
             st.session_state.confirm_voltar = True
             st.rerun()
     else:
-        st.markdown('<p class="warn-text">Perder os dados preenchidos?</p>', unsafe_allow_html=True)
+        st.markdown('<div class="voltar-confirm">⚠️ Perder os dados preenchidos?</div>',
+                    unsafe_allow_html=True)
         x1, x2 = st.columns(2)
         with x1:
-            if st.button("Sim", use_container_width=True):
-                st.session_state.contract_id = None
-                st.session_state.confirm_voltar = False
+            if st.button("Sim, voltar", use_container_width=True):
+                st.session_state.update(contract_id=None, confirm_voltar=False,
+                                        saved_form_values={})
                 st.rerun()
         with x2:
-            if st.button("Nao", use_container_width=True):
+            if st.button("Cancelar", use_container_width=True):
                 st.session_state.confirm_voltar = False
                 st.rerun()
+ 
 with cc:
-    st.markdown(f"""<div style="display:flex;align-items:center;gap:8px;padding-top:6px;">
-        <span class="crumb-root">Contratos</span>
-        <span class="crumb-sep">›</span>
-        <span class="crumb-active">{active.get('icon','')} {active['name']}</span>
+    st.markdown(f"""<div class="breadcrumb" style="padding-top:8px;">
+        <span class="breadcrumb-root">Contratos</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-active">{active.get('icon','')} {active['name']}</span>
     </div>""", unsafe_allow_html=True)
  
-st.markdown('<hr style="margin:16px 0 0;"/>', unsafe_allow_html=True)
+st.markdown('<hr/>', unsafe_allow_html=True)
+st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+ 
  
 # ─────────────────────────────────────────────
-# FORM PAGE HEADER
+# FORM HEADER + STEP PILLS
 # ─────────────────────────────────────────────
  
-st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+sections     = active.get("sections", [])
+total_secs   = len(sections)
+saved        = st.session_state.saved_form_values
+ 
+# Build step pills — a section is "done" if all its required fields have saved values
+def section_done(section: dict) -> bool:
+    for f in section.get("fields", []):
+        if f.get("required") and f.get("type") != "derived":
+            v = saved.get(f["key"])
+            if v is None or (isinstance(v, str) and not v.strip()):
+                return False
+    return bool(saved)  # only show done if form was previously submitted
+ 
+pills_html = '<div class="step-pills">'
+for i, sec in enumerate(sections):
+    is_done = section_done(sec)
+    cls  = "done" if is_done else "step-pill"
+    dot  = "✓" if is_done else f"{i+1}"
+    pills_html += f'<span class="step-pill {cls}"><span class="step-pill-dot" style="{"width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0" if not is_done else ""}"></span>{sec["label"]}</span>'
+pills_html += "</div>"
+ 
 st.markdown(f"""
-<p class="form-title">{active.get('icon','')} {active['name']}</p>
-<p class="form-subtitle">{active.get('description','')}</p>
+<div style="margin:20px 0 4px;">
+    <p class="form-title">{active.get('icon','')} {active['name']}</p>
+    <p class="form-subtitle">{active.get('description','')}</p>
+</div>
+{pills_html}
 """, unsafe_allow_html=True)
+ 
  
 # ─────────────────────────────────────────────
 # DYNAMIC FORM
@@ -1166,9 +1146,9 @@ form_key   = f"form_{active['_id']}"
 raw_values = {}
  
 with st.form(form_key):
-    for section in active.get("sections", []):
+    for section in sections:
         st.markdown(f"""<div class="section-label">
-            <span>{section.get('icon','')}</span>
+            <span class="section-icon">{section.get('icon','')}</span>
             {section['label']}
         </div>""", unsafe_allow_html=True)
  
@@ -1180,12 +1160,18 @@ with st.form(form_key):
             cols  = st.columns(len(batch))
             for col, field in zip(cols, batch):
                 with col:
-                    raw_values[field["key"]] = render_field(field, form_key, st.session_state.saved_form_values)
+                    raw_values[field["key"]] = render_field(
+                        field, form_key, st.session_state.saved_form_values
+                    )
             i += 3
  
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
     st.caption("* Campos obrigatorios")
-    submit = st.form_submit_button("Gerar contrato  →", type="primary", use_container_width=True)
+    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+    submit = st.form_submit_button(
+        "Gerar contrato  →", type="primary", use_container_width=True
+    )
+ 
  
 # ─────────────────────────────────────────────
 # SUBMISSION
@@ -1197,23 +1183,24 @@ if submit:
         for s in active.get("sections", [])
         for f in s.get("fields", [])
     }
-    errors = [e for k, v in raw_values.items()
-              if (e := validate_raw(all_fields.get(k, {}), v))]
+    errors  = [e for k, v in raw_values.items()
+               if (e := validate_raw(all_fields.get(k, {}), v))]
     errors += check_time_pairs(active, raw_values)
  
     if errors:
+        items = "".join(f"<li>{e}</li>" for e in errors)
         st.markdown(f"""<div class="err-box">
-            <p class="err-title">Corrija os campos abaixo:</p>
-            <ul class="err-list">{"".join(f'<li>{e}</li>' for e in errors)}</ul>
+            <p class="err-title">⚠️ Corrija os campos abaixo antes de continuar</p>
+            <ul class="err-list">{items}</ul>
         </div>""", unsafe_allow_html=True)
     else:
         try:
             context  = build_context(active, raw_values)
             tpl_path = resolve_template(active["template"], active["_id"])
-            st.session_state.generated_docx    = render_docx(tpl_path, context)
-            st.session_state.generated_filename = build_filename(active, context)
-            st.session_state.saved_form_values  = raw_values
-            st.session_state.show_preview       = False
+            st.session_state.generated_docx     = render_docx(tpl_path, context)
+            st.session_state.generated_filename  = build_filename(active, context)
+            st.session_state.saved_form_values   = raw_values
+            st.session_state.show_preview        = False
             st.rerun()
         except FileNotFoundError:
-            st.error(f"Template '{active['template']}' nao encontrado. Verifique se o arquivo .docx esta na pasta contracts/ ou na raiz do projeto.")
+            st.error(f"Template '{active['template']}' nao encontrado em contracts/.")
