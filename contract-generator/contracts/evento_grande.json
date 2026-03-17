@@ -2,7 +2,7 @@
   "name": "Evento Grande",
   "icon": "🎉",
   "description": "Eventos completos, aniversarios grandes e reservas exclusivas da pista.",
-  "template": "evento_grande.docx",
+  "template": "contract_template.docx",
   "filename_fields": [
     "contractor_name",
     "event_date"
@@ -113,21 +113,21 @@
           "label": "1 atividade",
           "type": "text",
           "required": true,
-          "placeholder": "Ex: 14:30"
+          "placeholder": "Ex: 14:30 - Entrada na pista"
         },
         {
           "key": "second",
           "label": "2 atividade",
           "type": "text",
           "required": true,
-          "placeholder": "Ex: 15:30"
+          "placeholder": "Ex: 15:30 - Corte do bolo"
         },
         {
           "key": "third",
           "label": "3 atividade",
           "type": "text",
           "required": true,
-          "placeholder": "Ex: 16:30"
+          "placeholder": "Ex: 16:30 - Encerramento"
         }
       ]
     },
@@ -137,10 +137,10 @@
       "fields": [
         {
           "key": "rink_name",
-          "label": "Tipo de pista",
+          "label": "Nome da pista",
           "type": "text",
           "required": true,
-          "placeholder": "Ex: Exclusiva"
+          "placeholder": "Ex: Arena Ice Brasil"
         },
         {
           "key": "tipo_espaco",
@@ -164,11 +164,6 @@
           "type": "currency",
           "required": true,
           "placeholder": "Ex: 1500.00"
-        },
-        {
-          "key": "contract_total_value_written",
-          "type": "currency_written",
-          "derived_from": "contract_total_value"
         },
         {
           "key": "payment_terms",

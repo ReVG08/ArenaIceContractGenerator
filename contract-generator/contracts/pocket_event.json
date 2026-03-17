@@ -2,7 +2,7 @@
   "name": "Pocket Event",
   "icon": "🎂",
   "description": "Eventos menores e aniversarios rapidos com menos variaveis.",
-  "template": "pocket_event.docx",
+  "template": "pocket_template.docx",
   "filename_fields": [
     "contractor_name",
     "event_date"
@@ -85,11 +85,6 @@
           "type": "currency",
           "required": true,
           "placeholder": "Ex: 800.00"
-        },
-        {
-          "key": "contract_value_written",
-          "type": "currency_written",
-          "derived_from": "contract_value"
         },
         {
           "key": "payment_method",

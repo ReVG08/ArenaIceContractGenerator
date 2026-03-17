@@ -5,29 +5,29 @@ import base64
 import tempfile
 from datetime import date
 from glob import glob
- 
+
 import streamlit as st
 from docxtpl import DocxTemplate
- 
+
 # ─────────────────────────────────────────────
 # PATHS
 # ─────────────────────────────────────────────
- 
+
 BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
 CONTRACTS_DIR = os.path.join(BASE_DIR, "contracts")
 APP_CONFIG    = os.path.join(BASE_DIR, "app_config.json")
- 
+
 WEEKDAYS_PT = {
     0: "Segunda-feira", 1: "Terca-feira", 2: "Quarta-feira",
     3: "Quinta-feira",  4: "Sexta-feira", 5: "Sabado", 6: "Domingo",
 }
 CPF_RE = re.compile(r"^\d{3}\.\d{3}\.\d{3}-\d{2}$")
- 
- 
+
+
 # ─────────────────────────────────────────────
 # CONFIG LOADERS
 # ─────────────────────────────────────────────
- 
+
 @st.cache_data
 def load_app_config() -> dict:
     defaults = {
@@ -72,8 +72,8 @@ def load_app_config() -> dict:
             return {**defaults, **json.load(f)}
     except FileNotFoundError:
         return defaults
- 
- 
+
+
 @st.cache_data
 def load_contracts() -> list:
     contracts = []
@@ -83,22 +83,61 @@ def load_contracts() -> list:
         data["_id"] = os.path.splitext(os.path.basename(path))[0]
         contracts.append(data)
     return contracts
- 
- 
+
+
 # ─────────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────────
- 
+
 def format_brl(value: float) -> str:
     return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
- 
+
+def format_brl_written(value: float) -> str:
+    """Convert a float BRL value to written Portuguese. E.g. 1500.0 -> 'mil e quinhentos reais'"""
+    ones     = ["","um","dois","tres","quatro","cinco","seis","sete","oito","nove","dez",
+                "onze","doze","treze","quatorze","quinze","dezesseis","dezessete","dezoito","dezenove"]
+    tens     = ["","","vinte","trinta","quarenta","cinquenta","sessenta","setenta","oitenta","noventa"]
+    hundreds = ["","cem","duzentos","trezentos","quatrocentos","quinhentos",
+                "seiscentos","setecentos","oitocentos","novecentos"]
+    def _u1000(n):
+        if n == 0: return ""
+        if n == 100: return "cem"
+        parts = []
+        if n >= 100:
+            parts.append(hundreds[n // 100]); n %= 100
+        if n >= 20:
+            t = tens[n // 10]; r = ones[n % 10]
+            parts.append(f"{t} e {r}" if r else t)
+        elif n > 0:
+            parts.append(ones[n])
+        return " e ".join(p for p in parts if p)
+    value   = round(value, 2)
+    reais   = int(value)
+    cents   = round((value - reais) * 100)
+    parts   = []
+    bilhoes = reais // 1_000_000_000
+    milhoes = (reais % 1_000_000_000) // 1_000_000
+    mil     = (reais % 1_000_000) // 1_000
+    resto   = reais % 1_000
+    if bilhoes: parts.append(f"{_u1000(bilhoes)} {'bilhao' if bilhoes==1 else 'bilhoes'}")
+    if milhoes: parts.append(f"{_u1000(milhoes)} {'milhao' if milhoes==1 else 'milhoes'}")
+    if mil:
+        parts.append("mil" if mil == 1 else f"{_u1000(mil)} mil")
+    if resto:   parts.append(_u1000(resto))
+    reais_str = " e ".join(p for p in parts if p)
+    if reais > 0:
+        reais_str = f"{reais_str} {'real' if reais==1 else 'reais'}"
+    cents_str = f"{_u1000(cents)} {'centavo' if cents==1 else 'centavos'}" if cents > 0 else ""
+    if reais_str and cents_str: return f"{reais_str} e {cents_str}"
+    return reais_str or cents_str or "zero reais"
+
 def get_logo_b64(filename: str) -> str:
     try:
         with open(os.path.join(BASE_DIR, filename), "rb") as f:
             return base64.b64encode(f.read()).decode()
     except FileNotFoundError:
         return ""
- 
+
 def resolve_template(template_filename: str, contract_id: str) -> str:
     for path in [
         os.path.join(CONTRACTS_DIR, template_filename),
@@ -108,7 +147,7 @@ def resolve_template(template_filename: str, contract_id: str) -> str:
         if os.path.exists(path):
             return path
     raise FileNotFoundError(f"Template '{template_filename}' not found.")
- 
+
 def render_docx(template_path: str, context: dict) -> bytes:
     doc = DocxTemplate(template_path)
     doc.render(context)
@@ -119,7 +158,7 @@ def render_docx(template_path: str, context: dict) -> bytes:
             return f.read()
     finally:
         os.unlink(tmp.name)
- 
+
 def show_contract_preview(docx_bytes: bytes):
     import mammoth, io
     with st.spinner("Gerando pre-visualizacao..."):
@@ -130,7 +169,7 @@ def show_contract_preview(docx_bytes: bytes):
         border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.12);">
         {result.value}
     </div>""", unsafe_allow_html=True)
- 
+
 def build_filename(contract: dict, context: dict) -> str:
     parts = [
         str(context.get(k, "")).replace("/", "-").replace(" ", "_")
@@ -138,16 +177,16 @@ def build_filename(contract: dict, context: dict) -> str:
     ]
     slug = "_".join(p for p in parts if p)
     return f"contrato_{slug or contract.get('_id', 'contrato')}.docx"
- 
- 
+
+
 # ─────────────────────────────────────────────
 # FIELD RENDERER (outside form — for wizard)
 # ─────────────────────────────────────────────
- 
+
 def render_field_free(field: dict, saved: dict):
     """Render a field outside st.form using unique session-state keys."""
     ftype  = field.get("type", "text")
-    if ftype == "derived":
+    if ftype in ("derived", "currency_written"):
         return None
     key    = field["key"]
     label  = field.get("label", key)
@@ -156,7 +195,7 @@ def render_field_free(field: dict, saved: dict):
     wkey   = f"wiz_{key}"
     dlabel = f"{label} *" if req else label
     sv     = saved.get(key)
- 
+
     if ftype in ("text", "cpf"):
         return st.text_input(dlabel, value=sv or "", placeholder=ph, key=wkey)
     if ftype == "textarea":
@@ -168,7 +207,7 @@ def render_field_free(field: dict, saved: dict):
     if ftype == "currency":
         return st.number_input(dlabel, min_value=0.0,
                                value=float(sv) if sv is not None else None,
-                               step=50.0, format="%.2f", placeholder=ph, key=wkey)
+                               step=50.0, placeholder=ph, key=wkey)
     if ftype == "date":
         past   = field.get("past_only", False)
         future = field.get("future_only", False)
@@ -186,12 +225,12 @@ def render_field_free(field: dict, saved: dict):
         idx  = opts.index(sv) if sv in (opts or []) else 0
         return st.selectbox(dlabel, opts, index=idx, key=wkey)
     return st.text_input(dlabel, value=sv or "", placeholder=ph, key=wkey)
- 
- 
+
+
 # ─────────────────────────────────────────────
 # VALIDATION
 # ─────────────────────────────────────────────
- 
+
 def validate_raw(field: dict, value) -> str | None:
     ftype = field.get("type", "text")
     label = field.get("label", field["key"])
@@ -207,7 +246,7 @@ def validate_raw(field: dict, value) -> str | None:
     if ftype == "cpf" and value and not CPF_RE.match(str(value).strip()):
         return f"<b>{label}</b> deve estar no formato 123.456.789-00."
     return None
- 
+
 def check_time_pairs(contract: dict, raw: dict) -> list:
     errors, checked = [], set()
     for section in contract.get("sections", []):
@@ -222,7 +261,7 @@ def check_time_pairs(contract: dict, raw: dict) -> list:
                     errors.append(f"<b>{end_label}</b> deve ser depois do horario de inicio.")
                 checked.update([field["key"], end_key])
     return errors
- 
+
 def validate_section(section: dict, saved: dict) -> list:
     errors = []
     for f in section.get("fields", []):
@@ -230,19 +269,21 @@ def validate_section(section: dict, saved: dict) -> list:
         if err:
             errors.append(err)
     return errors
- 
- 
+
+
 # ─────────────────────────────────────────────
 # CONTEXT BUILDER
 # ─────────────────────────────────────────────
- 
+
 def build_context(contract: dict, raw: dict) -> dict:
     all_fields = {f["key"]: f for s in contract.get("sections", []) for f in s.get("fields", [])}
     ctx = {}
+
+    # First pass: process all real input fields
     for key, value in raw.items():
         field = all_fields.get(key, {})
         ftype = field.get("type", "text")
-        if ftype == "derived" or value is None:
+        if ftype in ("derived", "currency_written") or value is None:
             ctx[key] = ""
             continue
         if ftype == "date":
@@ -253,21 +294,37 @@ def build_context(contract: dict, raw: dict) -> dict:
         elif ftype == "time":
             ctx[key] = value.strftime("%H:%M")
         elif ftype == "currency":
-            ctx[key] = format_brl(float(value))
+            ctx[key] = f"{format_brl(float(value))} ({format_brl_written(float(value))})"
         elif ftype == "number":
             ctx[key] = int(value)
         else:
             ctx[key] = value
+
+    # Second pass: compute all currency_written fields from their source
+    # Also generate a _combined variable with "R$ X,XX (written form)"
+    for key, field in all_fields.items():
+        if field.get("type") == "currency_written":
+            src_key = field.get("derived_from", "")
+            src_val = raw.get(src_key)
+            try:
+                fv = float(src_val) if src_val else 0.0
+                written = format_brl_written(fv)
+                numeric = format_brl(fv)
+                ctx[key] = f"{numeric} ({written})"
+            except (TypeError, ValueError):
+                ctx[key] = ""
+
+
     return ctx
- 
- 
+
+
 # ─────────────────────────────────────────────
 # CSS INJECTION
 # ─────────────────────────────────────────────
- 
+
 def inject_css(cfg: dict, theme: str):
     p = "dark_" if theme == "dark" else "light_"
- 
+
     bg_from = cfg[f"{p}bg_from"]
     bg_mid  = cfg[f"{p}bg_mid"]
     bg_to   = cfg[f"{p}bg_to"]
@@ -278,7 +335,7 @@ def inject_css(cfg: dict, theme: str):
     t_label = cfg[f"{p}text_label"]
     inp_bg  = cfg[f"{p}input_bg"]
     inp_b   = cfg[f"{p}input_border"]
- 
+
     acc   = cfg["accent_color"]
     acc_h = cfg["accent_hover"]
     acc_s = cfg["accent_success"]
@@ -289,7 +346,7 @@ def inject_css(cfg: dict, theme: str):
     r_c   = cfg["border_radius_card"]
     r_i   = cfg["border_radius_input"]
     r_b   = cfg["border_radius_button"]
- 
+
     if theme == "dark":
         footer_bg  = f"linear-gradient(90deg,{bg_from}f2 0%,{bg_mid}f2 100%)"
         footer_b   = "rgba(96,165,250,0.1)"
@@ -348,15 +405,15 @@ def inject_css(cfg: dict, theme: str):
         mesh_c2 = f"{acc_s}07"
         track_bg = "rgba(0,0,0,0.07)"
         track_fill = acc
- 
+
     st.markdown(f"""
 <style>
 @import url('{gurl}');
- 
+
 html, body, [class*="css"] {{ font-family: '{fb}', sans-serif !important; }}
 #MainMenu, footer, header {{ visibility: hidden; }}
 section[data-testid="stSidebar"] {{ display: none !important; }}
- 
+
 .stApp {{
     background:
         radial-gradient(ellipse at 15% 15%, {mesh_c1} 0%, transparent 55%),
@@ -367,11 +424,13 @@ section[data-testid="stSidebar"] {{ display: none !important; }}
 .block-container {{
     padding-top: 0 !important;
     padding-bottom: 100px !important;
-    max-width: 1000px !important;
+    max-width: 100% !important;
+    padding-left: 3rem !important;
+    padding-right: 3rem !important;
 }}
- 
+
 h1,h2,h3 {{ font-family: '{fh}', sans-serif !important; color: {t_main} !important; }}
- 
+
 /* ── Labels ── */
 label, .stTextInput label, .stNumberInput label,
 .stSelectbox label, .stDateInput label,
@@ -383,7 +442,7 @@ label, .stTextInput label, .stNumberInput label,
     text-transform: uppercase !important;
     margin-bottom: 4px !important;
 }}
- 
+
 /* ── Inputs ── */
 .stTextInput input, .stNumberInput input, [data-baseweb="input"] input {{
     background: {inp_bg} !important;
@@ -435,7 +494,7 @@ label, .stTextInput label, .stNumberInput label,
 .stNumberInput button {{ color: {t_main} !important; }}
 [data-baseweb="menu"] li {{ background: {inp_bg} !important; color: {t_main} !important; }}
 [data-baseweb="option"]:hover {{ background: {acc}18 !important; }}
- 
+
 /* ── Primary button ── */
 .stButton button[kind="primary"] {{
     background: linear-gradient(135deg, {acc} 0%, {acc_h} 100%) !important;
@@ -486,13 +545,13 @@ label, .stTextInput label, .stNumberInput label,
     transform: translateY(-2px) !important;
     box-shadow: 0 8px 28px {acc_s}66 !important;
 }}
- 
+
 /* ── Misc ── */
 .stAlert {{ border-radius: {r_c} !important; border: none !important; }}
 hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 .stCaption, small {{ color: {t_sub} !important; font-size: 0.73rem !important; }}
 .stSpinner > div {{ border-top-color: {acc} !important; }}
- 
+
 /* ── Sticky footer ── */
 .sticky-footer {{
     position: fixed;
@@ -525,7 +584,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     border-color: {ghost_hb};
     color: {ghost_hc};
 }}
- 
+
 /* ── Top bar ── */
 .top-bar {{
     display: flex;
@@ -552,7 +611,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     text-transform: uppercase;
     font-weight: 500;
 }}
- 
+
 /* ── Select screen ── */
 .select-heading {{
     font-family: '{fh}', sans-serif;
@@ -596,7 +655,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     color:{t_main} !important; margin:0 0 8px;
 }}
 .contract-card-desc {{ font-size:0.8rem; color:{t_sub} !important; margin:0; line-height:1.6; }}
- 
+
 /* ── Wizard progress bar ── */
 .wizard-header {{
     margin-bottom: 28px;
@@ -703,7 +762,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     margin: 0 -2px;
 }}
 .step-connector.done {{ background: {step_done_b}; }}
- 
+
 /* ── Section title inside wizard step ── */
 .section-header {{
     margin-bottom: 24px;
@@ -733,7 +792,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     color: {t_sub};
     margin: 0 0 0 42px;
 }}
- 
+
 /* ── Breadcrumb ── */
 .breadcrumb {{
     display: flex; align-items: center; gap: 8px; margin-bottom: 24px;
@@ -741,7 +800,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 .bc-root {{ font-size: 0.73rem; color: {t_sub}; }}
 .bc-sep  {{ font-size: 0.73rem; color: {t_sub}; opacity: 0.35; }}
 .bc-active {{ font-size: 0.73rem; font-weight: 600; color: {t_label}; }}
- 
+
 /* ── Confirm voltar ── */
 .voltar-box {{
     background: rgba(251,191,36,0.08);
@@ -752,7 +811,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     color: {warn_c};
     margin-bottom: 8px;
 }}
- 
+
 /* ── Success ── */
 .success-card {{
     background: linear-gradient(135deg, {acc_s}12 0%, {acc_s}05 100%);
@@ -780,7 +839,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     letter-spacing:-0.02em;
 }}
 .success-name {{ font-size:0.88rem; color:{acc_s}; font-weight:500; margin:0; }}
- 
+
 /* ── Error box ── */
 .err-box {{
     background:{err_bg};
@@ -797,7 +856,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     color:{err_li}; font-size:0.78rem;
     margin:0; padding-left:16px; line-height:1.9;
 }}
- 
+
 /* ── Login ── */
 .login-outer {{
     display:flex; flex-direction:column;
@@ -825,36 +884,36 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 }}
 </style>
 """, unsafe_allow_html=True)
- 
- 
+
+
 # ─────────────────────────────────────────────
 # BOOTSTRAP
 # ─────────────────────────────────────────────
- 
+
 cfg       = load_app_config()
 contracts = load_contracts()
 LOGO_B64  = get_logo_b64(cfg["logo"])
- 
+
 st.set_page_config(
     page_title=f"{cfg['app_name']} — Contratos",
     page_icon="📄",
     layout="wide",
 )
- 
+
 if "theme" not in st.session_state:
     st.session_state.theme = cfg.get("default_theme", "dark")
- 
+
 if st.query_params.get("sair") == "1":
     st.session_state.clear()
     st.query_params.clear()
     st.rerun()
- 
+
 inject_css(cfg, st.session_state.theme)
- 
+
 # ─────────────────────────────────────────────
 # SESSION STATE
 # ─────────────────────────────────────────────
- 
+
 for k, v in [
     ("authenticated",     False),
     ("contract_id",       None),
@@ -867,17 +926,17 @@ for k, v in [
 ]:
     if k not in st.session_state:
         st.session_state[k] = v
- 
- 
+
+
 # ─────────────────────────────────────────────
 # PASSWORD GATE
 # ─────────────────────────────────────────────
- 
+
 if not st.session_state.authenticated:
     _, col, _ = st.columns([1, 1.2, 1])
     with col:
         st.markdown("<div style='height:10vh'></div>", unsafe_allow_html=True)
- 
+
         if LOGO_B64:
             st.markdown(f"""<div class="login-logo">
                 <img src="data:image/png;base64,{LOGO_B64}"
@@ -890,24 +949,24 @@ if not st.session_state.authenticated:
                     {cfg['app_name']}
                 </span>
             </div>""", unsafe_allow_html=True)
- 
+
         st.markdown(f"""<div class="login-card">
             <p class="login-title">Bem-vindo</p>
             <p class="login-sub">{cfg['app_subtitle']}</p>
         </div>""", unsafe_allow_html=True)
- 
+
         pw = st.text_input("Senha de acesso", type="password",
                            placeholder="Digite sua senha",
                            label_visibility="collapsed")
         st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
- 
+
         if st.button("Entrar  →", use_container_width=True, type="primary"):
             if pw == cfg["password"]:
                 st.session_state.authenticated = True
                 st.rerun()
             elif pw:
                 st.error("Senha incorreta.")
- 
+
         st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
         tc1, tc2 = st.columns(2)
         with tc1:
@@ -916,14 +975,14 @@ if not st.session_state.authenticated:
         with tc2:
             if st.button("🌙 Escuro", use_container_width=True):
                 st.session_state.theme = "dark"; st.rerun()
- 
+
     st.stop()
- 
- 
+
+
 # ─────────────────────────────────────────────
 # STICKY FOOTER
 # ─────────────────────────────────────────────
- 
+
 tm = cfg[f"{'dark' if st.session_state.theme=='dark' else 'light'}_text_main"]
 logo_html = (
     f'<img src="data:image/png;base64,{LOGO_B64}" style="height:28px;opacity:0.9;"/>'
@@ -935,12 +994,12 @@ st.markdown(f"""<div class="sticky-footer">
     {logo_html}
     <a href="?sair=1" class="footer-sair-btn" target="_self">🚪 Sair</a>
 </div>""", unsafe_allow_html=True)
- 
- 
+
+
 # ─────────────────────────────────────────────
 # TOP BAR
 # ─────────────────────────────────────────────
- 
+
 tb1, tb2 = st.columns([5, 1])
 with tb1:
     logo_top = (
@@ -962,24 +1021,24 @@ with tb2:
     if st.button(tl, use_container_width=True):
         st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
         st.rerun()
- 
- 
+
+
 # ─────────────────────────────────────────────
 # CONTRACT SELECTION
 # ─────────────────────────────────────────────
- 
+
 if st.session_state.contract_id is None:
     st.session_state.update(
         confirm_voltar=False, generated_docx=None,
         generated_filename=None, show_preview=False,
         wizard_step=0, wizard_values={}
     )
- 
+
     st.markdown("""
     <p class="select-heading">Gerar contrato</p>
     <p class="select-sub">Selecione o tipo de contrato que deseja criar.</p>
     """, unsafe_allow_html=True)
- 
+
     cols = st.columns(max(len(contracts), 1), gap="large")
     for i, contract in enumerate(contracts):
         with cols[i % len(cols)]:
@@ -996,37 +1055,37 @@ if st.session_state.contract_id is None:
                 st.session_state.wizard_values = {}
                 st.rerun()
     st.stop()
- 
- 
+
+
 # ─────────────────────────────────────────────
 # LOAD ACTIVE CONTRACT
 # ─────────────────────────────────────────────
- 
+
 active = next((c for c in contracts if c["_id"] == st.session_state.contract_id), None)
 if active is None:
     st.error("Contrato nao encontrado.")
     st.session_state.contract_id = None
     st.rerun()
- 
+
 sections   = active.get("sections", [])
 total_steps = len(sections)
- 
- 
+
+
 # ─────────────────────────────────────────────
 # SUCCESS STATE
 # ─────────────────────────────────────────────
- 
+
 if st.session_state.generated_docx is not None:
     docx_bytes   = st.session_state.generated_docx
     filename     = st.session_state.generated_filename
     name_display = filename.replace("contrato_","").replace(".docx","").replace("_"," ")
- 
+
     st.markdown(f"""<div class="success-card">
         <span class="success-icon">✅</span>
         <p class="success-title">Contrato gerado!</p>
         <p class="success-name">{name_display}</p>
     </div>""", unsafe_allow_html=True)
- 
+
     c1, c2, c3, c4 = st.columns(4, gap="small")
     with c1:
         st.download_button(
@@ -1055,17 +1114,17 @@ if st.session_state.generated_docx is not None:
                 wizard_step=0, wizard_values={}
             )
             st.rerun()
- 
+
     if st.session_state.show_preview:
         st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
         show_contract_preview(docx_bytes)
     st.stop()
- 
- 
+
+
 # ─────────────────────────────────────────────
 # BREADCRUMB
 # ─────────────────────────────────────────────
- 
+
 st.markdown(f"""<div class="breadcrumb">
     <span class="bc-root">Contratos</span>
     <span class="bc-sep">›</span>
@@ -1073,16 +1132,16 @@ st.markdown(f"""<div class="breadcrumb">
     <span class="bc-sep">›</span>
     <span class="bc-active">{sections[st.session_state.wizard_step]['label']}</span>
 </div>""", unsafe_allow_html=True)
- 
- 
+
+
 # ─────────────────────────────────────────────
 # WIZARD PROGRESS HEADER
 # ─────────────────────────────────────────────
- 
+
 step_idx   = st.session_state.wizard_step
 pct        = int(((step_idx) / total_steps) * 100)
 cur_section = sections[step_idx]
- 
+
 # Build step list HTML
 steps_html = '<div class="step-list">'
 for i, sec in enumerate(sections):
@@ -1092,7 +1151,7 @@ for i, sec in enumerate(sections):
     num_cls = "done-num" if is_done else ""
     num_content = "✓" if is_done else str(i + 1)
     connector_cls = "done" if i < step_idx else ""
- 
+
     steps_html += f"""<div class="step-item">
         <div class="step-btn {cls}">
             <span class="step-num {num_cls}" data-n="{num_content}"></span>
@@ -1102,7 +1161,7 @@ for i, sec in enumerate(sections):
     if i < total_steps - 1:
         steps_html += f'<div class="step-connector {connector_cls}"></div>'
 steps_html += "</div>"
- 
+
 st.markdown(f"""<div class="wizard-header">
     <div class="wizard-meta">
         <p class="wizard-title">{active.get('icon','')} {active['name']}</p>
@@ -1113,25 +1172,25 @@ st.markdown(f"""<div class="wizard-header">
     </div>
     {steps_html}
 </div>""", unsafe_allow_html=True)
- 
+
 st.markdown('<hr/>', unsafe_allow_html=True)
 st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
- 
- 
+
+
 # ─────────────────────────────────────────────
 # CURRENT STEP FIELDS
 # ─────────────────────────────────────────────
- 
+
 st.markdown(f"""<div class="section-header">
     <p class="section-title">
         <span class="section-icon-lg">{cur_section.get('icon','')}</span>
         {cur_section['label']}
     </p>
 </div>""", unsafe_allow_html=True)
- 
+
 visible = [f for f in cur_section.get("fields", []) if f.get("type") != "derived"]
 step_raw = {}
- 
+
 i = 0
 while i < len(visible):
     batch = visible[i:i + 3]
@@ -1142,20 +1201,20 @@ while i < len(visible):
                 field, st.session_state.wizard_values
             )
     i += 3
- 
+
 st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 st.caption("* Campos obrigatorios")
 st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
- 
- 
+
+
 # ─────────────────────────────────────────────
 # WIZARD NAVIGATION
 # ─────────────────────────────────────────────
- 
+
 is_last = (step_idx == total_steps - 1)
- 
+
 nav_left, nav_right = st.columns([1, 1])
- 
+
 with nav_left:
     if step_idx == 0:
         # First step — back goes to contract selection
@@ -1185,7 +1244,7 @@ with nav_left:
             st.session_state.wizard_step -= 1
             st.session_state.confirm_voltar = False
             st.rerun()
- 
+
 with nav_right:
     if not is_last:
         if st.button("Proxima etapa  →", use_container_width=True, type="primary"):
@@ -1196,7 +1255,7 @@ with nav_right:
                 err = validate_raw(all_fields_map.get(k, {}), v)
                 if err:
                     errors.append(err)
- 
+
             if errors:
                 items = "".join(f"<li>{e}</li>" for e in errors)
                 st.markdown(f"""<div class="err-box">
@@ -1220,7 +1279,7 @@ with nav_right:
             errors  = [e for k, v in all_values.items()
                        if (e := validate_raw(all_fields_map.get(k, {}), v))]
             errors += check_time_pairs(active, all_values)
- 
+
             if errors:
                 items = "".join(f"<li>{e}</li>" for e in errors)
                 st.markdown(f"""<div class="err-box">
