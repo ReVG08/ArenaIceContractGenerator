@@ -426,13 +426,13 @@ html, body, [class*="css"] {{ font-family: '{fb}', sans-serif !important; }}
 #MainMenu, footer, header {{ visibility: hidden; }}
 section[data-testid="stSidebar"] {{ display: none !important; }}
 
-/* ── Animated background with orbs ── */
+/* ── Background — deep with orbs ── */
 .stApp {{
     background:
-        radial-gradient(ellipse at 10% 10%, {mesh_c1} 0%, transparent 45%),
-        radial-gradient(ellipse at 90% 90%, {mesh_c2} 0%, transparent 45%),
-        radial-gradient(ellipse at 60% 20%, {mesh_c3} 0%, transparent 40%),
-        linear-gradient(135deg, {bg_from} 0%, {bg_mid} 50%, {bg_to} 100%);
+        radial-gradient(ellipse 60% 50% at 10% 0%, {mesh_c1} 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 90% 100%, {mesh_c2} 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 70% 20%, {mesh_c3} 0%, transparent 60%),
+        linear-gradient(160deg, {bg_from} 0%, {bg_mid} 55%, {bg_to} 100%);
     min-height: 100vh;
 }}
 .block-container {{
@@ -442,7 +442,6 @@ section[data-testid="stSidebar"] {{ display: none !important; }}
     padding-left: 3rem !important;
     padding-right: 3rem !important;
 }}
-
 h1,h2,h3 {{ font-family: '{fh}', sans-serif !important; color: {t_main} !important; }}
 
 /* ── Labels ── */
@@ -457,7 +456,7 @@ label, .stTextInput label, .stNumberInput label,
     margin-bottom: 4px !important;
 }}
 
-/* ── Glass inputs ── */
+/* ── Inputs — glass simulation ── */
 .stTextInput input, .stNumberInput input, [data-baseweb="input"] input {{
     background: {inp_glass} !important;
     border: 1px solid {inp_glass_b} !important;
@@ -466,13 +465,12 @@ label, .stTextInput label, .stNumberInput label,
     -webkit-text-fill-color: {t_main} !important;
     font-family: '{fb}', sans-serif !important;
     font-size: 0.9rem !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.04) !important;
     transition: border-color 0.18s, box-shadow 0.18s !important;
 }}
 .stTextInput input:focus, [data-baseweb="input"] input:focus {{
     border-color: {acc} !important;
-    box-shadow: 0 0 0 3px {acc}22, inset 0 1px 0 rgba(255,255,255,0.1) !important;
+    box-shadow: 0 0 0 3px {acc}22, inset 0 1px 3px rgba(0,0,0,0.1) !important;
     outline: none !important;
 }}
 .stTextInput input::placeholder, [data-baseweb="input"] input::placeholder {{
@@ -486,20 +484,19 @@ label, .stTextInput label, .stNumberInput label,
     -webkit-text-fill-color: {t_main} !important;
     font-family: '{fb}', sans-serif !important;
     font-size: 0.9rem !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15) !important;
     transition: border-color 0.18s, box-shadow 0.18s !important;
 }}
 .stTextArea textarea:focus {{
     border-color: {acc} !important;
-    box-shadow: 0 0 0 3px {acc}22 !important;
+    box-shadow: 0 0 0 3px {acc}22, inset 0 1px 3px rgba(0,0,0,0.1) !important;
 }}
 [data-baseweb="select"] > div {{
     background: {inp_glass} !important;
     border: 1px solid {inp_glass_b} !important;
     border-radius: {r_i} !important;
     color: {t_main} !important;
-    backdrop-filter: blur(10px) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15) !important;
 }}
 [data-baseweb="select"] span, [data-baseweb="select"] div,
 [data-baseweb="select"] input, [data-baseweb="base-input"],
@@ -511,11 +508,7 @@ label, .stTextInput label, .stNumberInput label,
     background: transparent !important;
 }}
 .stNumberInput button {{ color: {t_main} !important; }}
-[data-baseweb="menu"] li {{
-    background: {inp_bg} !important;
-    color: {t_main} !important;
-    backdrop-filter: blur(20px) !important;
-}}
+[data-baseweb="menu"] li {{ background: {inp_bg} !important; color: {t_main} !important; }}
 [data-baseweb="option"]:hover {{ background: {acc}18 !important; }}
 
 /* ── Primary button ── */
@@ -533,13 +526,11 @@ label, .stTextInput label, .stNumberInput label,
 }}
 .stButton button[kind="primary"]:hover {{
     transform: translateY(-2px) !important;
-    box-shadow: 0 8px 32px {acc}77, inset 0 1px 0 rgba(255,255,255,0.25) !important;
+    box-shadow: 0 8px 32px {acc}77 !important;
 }}
 .stButton button[kind="primary"]:active {{
     transform: translateY(0) scale(0.98) !important;
 }}
-
-/* ── Ghost button ── */
 .stButton button[kind="secondary"] {{
     background: {ghost_bg} !important;
     border: 1px solid {ghost_b} !important;
@@ -548,9 +539,8 @@ label, .stTextInput label, .stNumberInput label,
     font-family: '{fb}', sans-serif !important;
     font-size: 0.88rem !important;
     font-weight: 500 !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
     transition: all 0.2s ease !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06) !important;
 }}
 .stButton button[kind="secondary"]:hover {{
     background: {ghost_hbg} !important;
@@ -558,8 +548,6 @@ label, .stTextInput label, .stNumberInput label,
     color: {ghost_hc} !important;
     transform: translateY(-1px) !important;
 }}
-
-/* ── Download button ── */
 .stDownloadButton button {{
     background: linear-gradient(135deg, {acc_s} 0%, {acc_sh} 100%) !important;
     border: none !important;
@@ -575,13 +563,12 @@ label, .stTextInput label, .stNumberInput label,
     box-shadow: 0 8px 32px {acc_s}77 !important;
 }}
 
-/* ── Misc ── */
 .stAlert {{ border-radius: {r_c} !important; border: none !important; }}
 hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 .stCaption, small {{ color: {t_sub} !important; font-size: 0.73rem !important; }}
 .stSpinner > div {{ border-top-color: {acc} !important; }}
 
-/* ── Sticky footer — glass ── */
+/* ── Sticky footer ── */
 .sticky-footer {{
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -589,12 +576,8 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     background: {footer_bg};
     border-top: 1px solid {footer_b};
     padding: 10px 40px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    box-shadow: 0 -1px 0 {footer_b}, 0 -8px 32px rgba(0,0,0,0.15);
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.2);
 }}
 .footer-sair-btn {{
     background: {ghost_bg};
@@ -602,170 +585,163 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     border-radius: 8px;
     color: {ghost_c};
     font-family: '{fb}', sans-serif;
-    font-size: 0.78rem;
-    font-weight: 500;
+    font-size: 0.78rem; font-weight: 500;
     padding: 6px 14px;
     transition: all 0.18s;
-    text-decoration: none;
-    white-space: nowrap;
-    backdrop-filter: blur(10px);
+    text-decoration: none; white-space: nowrap;
 }}
 .footer-sair-btn:hover {{
-    background: {ghost_hbg};
-    border-color: {ghost_hb};
-    color: {ghost_hc};
+    background: {ghost_hbg}; border-color: {ghost_hb}; color: {ghost_hc};
 }}
 
-/* ── Top bar — glass ── */
+/* ── Top bar — real glass panel ── */
 .top-bar {{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 24px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px;
     margin: 0 -3rem 32px;
-    background: {glass_bg};
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: linear-gradient(180deg,
+        rgba(255,255,255,0.07) 0%,
+        rgba(255,255,255,0.03) 100%);
     border-bottom: 1px solid {glass_border};
-    box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.08);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.10),
+        0 4px 32px rgba(0,0,0,0.20);
+    position: relative;
+}}
+.top-bar::before {{
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; opacity: 0.4;
 }}
 .top-bar-left {{ display: flex; align-items: center; gap: 12px; }}
 .top-bar-name {{
     font-family: '{fh}', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: {t_main};
-    margin: 0;
-    letter-spacing: -0.01em;
+    font-size: 1rem; font-weight: 700;
+    color: {t_main}; margin: 0; letter-spacing: -0.01em;
 }}
 .top-bar-sub {{
-    font-size: 0.7rem;
-    color: {t_sub};
-    margin: 2px 0 0;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    font-weight: 500;
+    font-size: 0.7rem; color: {t_sub};
+    margin: 2px 0 0; letter-spacing: 0.05em;
+    text-transform: uppercase; font-weight: 500;
 }}
 
 /* ── Select screen ── */
 .select-heading {{
     font-family: '{fh}', sans-serif;
-    font-size: 2.1rem;
-    font-weight: 800;
-    color: {t_main};
-    margin: 0 0 8px;
-    letter-spacing: -0.03em;
-    line-height: 1.2;
+    font-size: 2.1rem; font-weight: 800;
+    color: {t_main}; margin: 0 0 8px;
+    letter-spacing: -0.03em; line-height: 1.2;
 }}
-.select-sub {{
-    font-size: 0.88rem;
-    color: {t_sub};
-    margin: 0 0 40px;
-}}
+.select-sub {{ font-size: 0.88rem; color: {t_sub}; margin: 0 0 40px; }}
 
-/* ── Contract cards — glass ── */
+/* ── Contract cards — faked glass ── */
 .contract-card {{
-    background: {glass_bg};
+    background: linear-gradient(145deg,
+        rgba(255,255,255,0.09) 0%,
+        rgba(255,255,255,0.04) 50%,
+        rgba(255,255,255,0.02) 100%);
     border: 1px solid {glass_border};
     border-radius: {r_c};
     padding: 36px 28px 28px;
     text-align: center;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.08);
+    position: relative; overflow: hidden;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.12),
+        inset 0 -1px 0 rgba(0,0,0,0.15),
+        0 8px 40px rgba(0,0,0,0.25),
+        0 1px 0 rgba(255,255,255,0.05);
     transition: border-color 0.22s, box-shadow 0.22s, transform 0.22s;
-    position: relative;
-    overflow: hidden;
 }}
 .contract-card::before {{
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    top: 0; left: -50%; width: 200%; height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%, rgba(255,255,255,0.25) 40%,
+        rgba(255,255,255,0.25) 60%, transparent 100%);
+}}
+.contract-card::after {{
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; border-radius: {r_c};
 }}
 .contract-card:hover {{
     border-color: {acc}66;
-    box-shadow: 0 16px 48px {acc}22, 0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12);
     transform: translateY(-5px);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.18),
+        0 20px 60px {acc}22,
+        0 8px 24px rgba(0,0,0,0.3);
 }}
-.contract-card-icon {{ font-size:2.8rem; margin-bottom:16px; display:block; }}
+.contract-card-icon {{ font-size:2.8rem; margin-bottom:16px; display:block; position:relative; z-index:1; }}
 .contract-card-name {{
     font-family:'{fh}',sans-serif !important;
     font-size:1.05rem; font-weight:700;
     color:{t_main} !important; margin:0 0 8px;
+    position:relative; z-index:1;
 }}
-.contract-card-desc {{ font-size:0.8rem; color:{t_sub} !important; margin:0; line-height:1.6; }}
+.contract-card-desc {{
+    font-size:0.8rem; color:{t_sub} !important;
+    margin:0; line-height:1.6;
+    position:relative; z-index:1;
+}}
 
-/* ── Wizard progress bar ── */
+/* ── Wizard ── */
 .wizard-header {{ margin-bottom: 28px; }}
 .wizard-meta {{
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 14px;
+    display: flex; align-items: baseline;
+    justify-content: space-between; margin-bottom: 14px;
 }}
 .wizard-title {{
     font-family: '{fh}', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: {t_main};
-    margin: 0;
-    letter-spacing: -0.02em;
+    font-size: 1.5rem; font-weight: 800;
+    color: {t_main}; margin: 0; letter-spacing: -0.02em;
 }}
 .wizard-counter {{
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: {t_sub};
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    white-space: nowrap;
+    font-size: 0.75rem; font-weight: 600;
+    color: {t_sub}; letter-spacing: 0.06em;
+    text-transform: uppercase; white-space: nowrap;
 }}
 .progress-track {{
-    height: 3px;
-    background: {track_bg};
-    border-radius: 99px;
-    overflow: hidden;
-    margin-bottom: 20px;
+    height: 3px; background: {track_bg};
+    border-radius: 99px; overflow: hidden; margin-bottom: 20px;
 }}
 .progress-fill {{
     height: 100%;
     background: linear-gradient(90deg, {track_fill}, {acc_s});
     border-radius: 99px;
     transition: width 0.4s cubic-bezier(.22,.68,0,1.2);
-    box-shadow: 0 0 8px {track_fill}88;
+    box-shadow: 0 0 10px {track_fill}88;
 }}
 .step-list {{
-    display: flex;
-    gap: 0;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: none;
+    display: flex; gap: 0; overflow-x: auto;
+    padding-bottom: 2px; scrollbar-width: none;
 }}
 .step-list::-webkit-scrollbar {{ display: none; }}
 .step-item {{ display: flex; align-items: center; flex-shrink: 0; }}
 .step-btn {{
-    display: flex;
-    align-items: center;
-    gap: 7px;
+    display: flex; align-items: center; gap: 7px;
     padding: 6px 14px 6px 10px;
     border-radius: 99px;
     font-family: '{fb}', sans-serif;
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-size: 0.72rem; font-weight: 600;
     letter-spacing: 0.04em;
     border: 1px solid {step_inactive_b};
     background: {step_inactive_bg};
     color: {step_inactive_c};
     white-space: nowrap;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
     transition: all 0.18s;
 }}
 .step-btn.active {{
     background: {step_active_bg};
     border-color: {step_active_b};
     color: {step_active_c};
-    box-shadow: 0 2px 12px {acc}33;
+    box-shadow: 0 2px 12px {acc}33, inset 0 1px 0 rgba(255,255,255,0.15);
 }}
 .step-btn.done {{
     background: {step_done_bg};
@@ -774,19 +750,14 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 }}
 .step-num {{
     display: inline-flex; align-items: center; justify-content: center;
-    width: 18px; height: 18px;
-    border-radius: 50%;
+    width: 18px; height: 18px; border-radius: 50%;
     font-size: 0.65rem; font-weight: 700;
-    background: currentColor;
-    color: transparent;
-    flex-shrink: 0;
-    position: relative;
+    background: currentColor; color: transparent;
+    flex-shrink: 0; position: relative;
 }}
 .step-num::after {{
-    content: attr(data-n);
-    position: absolute;
-    color: {bg_from};
-    font-size: 0.62rem; font-weight: 700;
+    content: attr(data-n); position: absolute;
+    color: {bg_from}; font-size: 0.62rem; font-weight: 700;
 }}
 .step-num.done-num::after {{ content: '✓'; }}
 .step-connector {{
@@ -800,21 +771,17 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 .section-header {{ margin-bottom: 24px; }}
 .section-title {{
     font-family: '{fh}', sans-serif;
-    font-size: 1.1rem; font-weight: 700;
-    color: {t_main};
-    margin: 0 0 4px;
-    letter-spacing: -0.01em;
+    font-size: 1.1rem; font-weight: 700; color: {t_main};
+    margin: 0 0 4px; letter-spacing: -0.01em;
     display: flex; align-items: center; gap: 10px;
 }}
 .section-icon-lg {{
     display: inline-flex; align-items: center; justify-content: center;
     width: 34px; height: 34px;
-    background: {glass_bg};
+    background: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
     border: 1px solid {glass_border};
-    border-radius: 10px;
-    font-size: 1rem; flex-shrink: 0;
-    backdrop-filter: blur(10px);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    border-radius: 10px; font-size: 1rem; flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 8px rgba(0,0,0,0.15);
 }}
 
 /* ── Breadcrumb ── */
@@ -827,60 +794,49 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 .voltar-box {{
     background: rgba(251,191,36,0.08);
     border: 1px solid rgba(251,191,36,0.22);
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 0.8rem;
-    color: {warn_c};
-    margin-bottom: 8px;
-    backdrop-filter: blur(10px);
+    border-radius: 10px; padding: 10px 14px;
+    font-size: 0.8rem; color: {warn_c}; margin-bottom: 8px;
+    box-shadow: inset 0 1px 0 rgba(251,191,36,0.1);
 }}
 
 /* ── Success card — glass ── */
 .success-card {{
-    background: {glass_bg};
-    border: 1px solid {acc_s}44;
+    background: linear-gradient(145deg,
+        rgba(255,255,255,0.08) 0%,
+        rgba(255,255,255,0.03) 100%);
+    border: 1px solid {acc_s}50;
     border-radius: {r_c};
-    padding: 48px 40px 40px;
-    text-align: center;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    box-shadow: 0 16px 48px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.10);
+    padding: 48px 40px 40px; text-align: center; margin-bottom: 24px;
+    position: relative; overflow: hidden;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.12),
+        0 16px 48px rgba(0,0,0,0.2),
+        0 0 0 1px rgba(255,255,255,0.04);
 }}
 .success-card::before {{
-    content:'';
-    position:absolute;
-    top:0;left:0;right:0;height:2px;
-    background:linear-gradient(90deg,{acc_s},{acc});
-    border-radius:{r_c} {r_c} 0 0;
-    opacity:0.9;
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, {acc_s}, {acc});
+    border-radius: {r_c} {r_c} 0 0;
 }}
 .success-card::after {{
-    content:'';
-    position:absolute;
-    inset:0;
-    background: radial-gradient(ellipse at 50% 0%, {acc_s}12 0%, transparent 60%);
-    pointer-events:none;
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, {acc_s}14 0%, transparent 65%);
+    pointer-events: none;
 }}
 .success-icon {{ font-size:3.2rem; display:block; margin-bottom:16px; position:relative; z-index:1; }}
 .success-title {{
     font-family:'{fh}',sans-serif;
-    font-size:1.5rem; font-weight:800;
-    color:{t_main}; margin:0 0 6px;
-    letter-spacing:-0.02em;
-    position:relative; z-index:1;
+    font-size:1.5rem; font-weight:800; color:{t_main};
+    margin:0 0 6px; letter-spacing:-0.02em; position:relative; z-index:1;
 }}
 .success-name {{ font-size:0.88rem; color:{acc_s}; font-weight:500; margin:0; position:relative; z-index:1; }}
 
 /* ── Error box ── */
 .err-box {{
-    background:{err_bg};
-    border:1px solid {err_b};
-    border-radius:{r_c};
-    padding:14px 18px; margin-top:14px;
-    backdrop-filter: blur(10px);
+    background: {err_bg}; border: 1px solid {err_b};
+    border-radius: {r_c}; padding: 14px 18px; margin-top: 14px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }}
 .err-title {{ color:{err_c}; font-weight:600; font-size:0.8rem; margin:0 0 8px; }}
 .err-list {{ color:{err_li}; font-size:0.78rem; margin:0; padding-left:16px; line-height:1.9; }}
@@ -893,35 +849,43 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 }}
 .login-logo {{ text-align:center; margin-bottom:28px; }}
 .login-card {{
-    background: {glass_bg};
+    background: linear-gradient(145deg,
+        rgba(255,255,255,0.10) 0%,
+        rgba(255,255,255,0.05) 50%,
+        rgba(255,255,255,0.02) 100%);
     border: 1px solid {glass_border};
-    border-radius: 20px;
-    padding: 36px 32px 28px;
-    width: 100%;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    box-shadow: 0 24px 64px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.10);
-    position: relative;
-    overflow: hidden;
+    border-radius: 20px; padding: 36px 32px 28px; width: 100%;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        inset 0 -1px 0 rgba(0,0,0,0.1),
+        0 32px 80px rgba(0,0,0,0.35),
+        0 0 0 1px rgba(255,255,255,0.05);
+    position: relative; overflow: hidden;
 }}
 .login-card::before {{
-    content: '';
-    position: absolute;
+    content: ''; position: absolute;
     top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+}}
+.login-card::after {{
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; border-radius: 20px;
 }}
 .login-title {{
     font-family:'{fh}',sans-serif;
-    font-size:1.4rem; font-weight:800;
-    color:{t_main}; text-align:center;
-    margin:0 0 4px; letter-spacing:-0.02em;
+    font-size:1.4rem; font-weight:800; color:{t_main};
+    text-align:center; margin:0 0 4px; letter-spacing:-0.02em;
+    position: relative; z-index: 1;
 }}
 .login-sub {{
     font-size:0.8rem; color:{t_sub};
     text-align:center; margin:0 0 24px;
+    position: relative; z-index: 1;
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 # ─────────────────────────────────────────────
