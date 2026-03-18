@@ -350,63 +350,73 @@ def inject_css(cfg: dict, theme: str):
     r_b   = cfg["border_radius_button"]
 
     if theme == "dark":
-        footer_bg  = f"linear-gradient(90deg,{bg_from}f2 0%,{bg_mid}f2 100%)"
-        footer_b   = "rgba(96,165,250,0.1)"
-        ghost_bg   = "rgba(255,255,255,0.05)"
-        ghost_b    = "rgba(96,165,250,0.2)"
-        ghost_c    = "#a8c4f0"
-        ghost_hbg  = "rgba(96,165,250,0.12)"
-        ghost_hb   = "rgba(96,165,250,0.45)"
-        ghost_hc   = "#e8f0fe"
-        divider_c  = "rgba(96,165,250,0.1)"
-        section_b  = "rgba(96,165,250,0.08)"
+        glass_bg      = "rgba(255,255,255,0.04)"
+        glass_border  = "rgba(255,255,255,0.10)"
+        footer_bg     = "rgba(6,13,31,0.85)"
+        footer_b      = "rgba(255,255,255,0.08)"
+        ghost_bg      = "rgba(255,255,255,0.06)"
+        ghost_b       = "rgba(255,255,255,0.12)"
+        ghost_c       = "#a8c4f0"
+        ghost_hbg     = "rgba(255,255,255,0.10)"
+        ghost_hb      = "rgba(255,255,255,0.22)"
+        ghost_hc      = "#e8f0fe"
+        divider_c     = "rgba(255,255,255,0.07)"
+        section_b     = "rgba(255,255,255,0.06)"
         step_inactive_bg  = "rgba(255,255,255,0.04)"
-        step_inactive_b   = "rgba(96,165,250,0.15)"
-        step_inactive_c   = "#4a6a9a"
-        step_active_bg    = f"{acc}22"
-        step_active_b     = f"{acc}66"
+        step_inactive_b   = "rgba(255,255,255,0.10)"
+        step_inactive_c   = "#5a7aa0"
+        step_active_bg    = acc + "28"
+        step_active_b     = acc + "77"
         step_active_c     = "#fff"
-        step_done_bg      = f"{acc_s}18"
-        step_done_b       = f"{acc_s}50"
+        step_done_bg      = acc_s + "20"
+        step_done_b       = acc_s + "60"
         step_done_c       = acc_s
-        err_bg  = "rgba(239,68,68,0.08)"
-        err_b   = "rgba(239,68,68,0.25)"
+        err_bg  = "rgba(239,68,68,0.10)"
+        err_b   = "rgba(239,68,68,0.28)"
         err_c   = "#fca5a5"
         err_li  = "#f87171"
         warn_c  = "#fbbf24"
-        mesh_c1 = f"{acc}14"
-        mesh_c2 = f"{acc_s}0d"
-        track_bg = "rgba(96,165,250,0.1)"
+        mesh_c1 = acc + "20"
+        mesh_c2 = acc_s + "12"
+        mesh_c3 = "rgba(120,80,255,0.10)"
+        track_bg   = "rgba(255,255,255,0.08)"
         track_fill = acc
+        inp_glass  = "rgba(255,255,255,0.05)"
+        inp_glass_b= "rgba(255,255,255,0.12)"
     else:
-        footer_bg  = f"linear-gradient(90deg,{bg_mid}f8 0%,{bg_from}f8 100%)"
-        footer_b   = "rgba(0,0,0,0.07)"
-        ghost_bg   = "rgba(0,0,0,0.03)"
-        ghost_b    = "rgba(0,0,0,0.12)"
-        ghost_c    = "#4a6a9a"
-        ghost_hbg  = f"{acc}0a"
-        ghost_hb   = f"{acc}44"
-        ghost_hc   = acc
-        divider_c  = "rgba(0,0,0,0.07)"
-        section_b  = "rgba(0,0,0,0.06)"
-        step_inactive_bg  = "rgba(0,0,0,0.03)"
-        step_inactive_b   = "rgba(0,0,0,0.1)"
+        glass_bg      = "rgba(255,255,255,0.55)"
+        glass_border  = "rgba(255,255,255,0.75)"
+        footer_bg     = "rgba(240,244,255,0.85)"
+        footer_b      = "rgba(0,0,0,0.08)"
+        ghost_bg      = "rgba(255,255,255,0.50)"
+        ghost_b       = "rgba(0,0,0,0.12)"
+        ghost_c       = "#4a6a9a"
+        ghost_hbg     = acc + "0d"
+        ghost_hb      = acc + "44"
+        ghost_hc      = acc
+        divider_c     = "rgba(0,0,0,0.07)"
+        section_b     = "rgba(0,0,0,0.06)"
+        step_inactive_bg  = "rgba(255,255,255,0.60)"
+        step_inactive_b   = "rgba(0,0,0,0.10)"
         step_inactive_c   = "#8a9abf"
-        step_active_bg    = f"{acc}12"
-        step_active_b     = f"{acc}44"
+        step_active_bg    = acc + "14"
+        step_active_b     = acc + "44"
         step_active_c     = acc
-        step_done_bg      = f"{acc_s}10"
-        step_done_b       = f"{acc_s}40"
+        step_done_bg      = acc_s + "12"
+        step_done_b       = acc_s + "44"
         step_done_c       = "#0b8f5c"
-        err_bg  = "rgba(220,38,38,0.05)"
-        err_b   = "rgba(220,38,38,0.18)"
+        err_bg  = "rgba(220,38,38,0.06)"
+        err_b   = "rgba(220,38,38,0.20)"
         err_c   = "#dc2626"
         err_li  = "#b91c1c"
         warn_c  = "#92400e"
-        mesh_c1 = f"{acc}08"
-        mesh_c2 = f"{acc_s}07"
-        track_bg = "rgba(0,0,0,0.07)"
+        mesh_c1 = acc + "0c"
+        mesh_c2 = acc_s + "08"
+        mesh_c3 = "rgba(120,80,255,0.05)"
+        track_bg   = "rgba(0,0,0,0.08)"
         track_fill = acc
+        inp_glass  = "rgba(255,255,255,0.70)"
+        inp_glass_b= "rgba(255,255,255,0.90)" 
 
     st.markdown(f"""
 <style>
@@ -416,10 +426,12 @@ html, body, [class*="css"] {{ font-family: '{fb}', sans-serif !important; }}
 #MainMenu, footer, header {{ visibility: hidden; }}
 section[data-testid="stSidebar"] {{ display: none !important; }}
 
+/* ── Animated background with orbs ── */
 .stApp {{
     background:
-        radial-gradient(ellipse at 15% 15%, {mesh_c1} 0%, transparent 55%),
-        radial-gradient(ellipse at 85% 85%, {mesh_c2} 0%, transparent 55%),
+        radial-gradient(ellipse at 10% 10%, {mesh_c1} 0%, transparent 45%),
+        radial-gradient(ellipse at 90% 90%, {mesh_c2} 0%, transparent 45%),
+        radial-gradient(ellipse at 60% 20%, {mesh_c3} 0%, transparent 40%),
         linear-gradient(135deg, {bg_from} 0%, {bg_mid} 50%, {bg_to} 100%);
     min-height: 100vh;
 }}
@@ -445,44 +457,49 @@ label, .stTextInput label, .stNumberInput label,
     margin-bottom: 4px !important;
 }}
 
-/* ── Inputs ── */
+/* ── Glass inputs ── */
 .stTextInput input, .stNumberInput input, [data-baseweb="input"] input {{
-    background: {inp_bg} !important;
-    border: 1.5px solid {inp_b} !important;
+    background: {inp_glass} !important;
+    border: 1px solid {inp_glass_b} !important;
     border-radius: {r_i} !important;
     color: {t_main} !important;
     -webkit-text-fill-color: {t_main} !important;
     font-family: '{fb}', sans-serif !important;
     font-size: 0.9rem !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
     transition: border-color 0.18s, box-shadow 0.18s !important;
 }}
 .stTextInput input:focus, [data-baseweb="input"] input:focus {{
     border-color: {acc} !important;
-    box-shadow: 0 0 0 3px {acc}1a !important;
+    box-shadow: 0 0 0 3px {acc}22, inset 0 1px 0 rgba(255,255,255,0.1) !important;
     outline: none !important;
 }}
 .stTextInput input::placeholder, [data-baseweb="input"] input::placeholder {{
     color: {t_sub} !important; opacity: 0.5 !important;
 }}
 .stTextArea textarea {{
-    background: {inp_bg} !important;
-    border: 1.5px solid {inp_b} !important;
+    background: {inp_glass} !important;
+    border: 1px solid {inp_glass_b} !important;
     border-radius: {r_i} !important;
     color: {t_main} !important;
     -webkit-text-fill-color: {t_main} !important;
     font-family: '{fb}', sans-serif !important;
     font-size: 0.9rem !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
     transition: border-color 0.18s, box-shadow 0.18s !important;
 }}
 .stTextArea textarea:focus {{
     border-color: {acc} !important;
-    box-shadow: 0 0 0 3px {acc}1a !important;
+    box-shadow: 0 0 0 3px {acc}22 !important;
 }}
 [data-baseweb="select"] > div {{
-    background: {inp_bg} !important;
-    border: 1.5px solid {inp_b} !important;
+    background: {inp_glass} !important;
+    border: 1px solid {inp_glass_b} !important;
     border-radius: {r_i} !important;
     color: {t_main} !important;
+    backdrop-filter: blur(10px) !important;
 }}
 [data-baseweb="select"] span, [data-baseweb="select"] div,
 [data-baseweb="select"] input, [data-baseweb="base-input"],
@@ -494,7 +511,11 @@ label, .stTextInput label, .stNumberInput label,
     background: transparent !important;
 }}
 .stNumberInput button {{ color: {t_main} !important; }}
-[data-baseweb="menu"] li {{ background: {inp_bg} !important; color: {t_main} !important; }}
+[data-baseweb="menu"] li {{
+    background: {inp_bg} !important;
+    color: {t_main} !important;
+    backdrop-filter: blur(20px) !important;
+}}
 [data-baseweb="option"]:hover {{ background: {acc}18 !important; }}
 
 /* ── Primary button ── */
@@ -508,23 +529,27 @@ label, .stTextInput label, .stNumberInput label,
     font-weight: 600 !important;
     letter-spacing: 0.03em !important;
     transition: all 0.2s ease !important;
-    box-shadow: 0 4px 16px {acc}44 !important;
+    box-shadow: 0 4px 20px {acc}55, inset 0 1px 0 rgba(255,255,255,0.2) !important;
 }}
 .stButton button[kind="primary"]:hover {{
     transform: translateY(-2px) !important;
-    box-shadow: 0 8px 28px {acc}66 !important;
+    box-shadow: 0 8px 32px {acc}77, inset 0 1px 0 rgba(255,255,255,0.25) !important;
 }}
 .stButton button[kind="primary"]:active {{
     transform: translateY(0) scale(0.98) !important;
 }}
+
+/* ── Ghost button ── */
 .stButton button[kind="secondary"] {{
     background: {ghost_bg} !important;
-    border: 1.5px solid {ghost_b} !important;
+    border: 1px solid {ghost_b} !important;
     border-radius: {r_b} !important;
     color: {ghost_c} !important;
     font-family: '{fb}', sans-serif !important;
     font-size: 0.88rem !important;
     font-weight: 500 !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
     transition: all 0.2s ease !important;
 }}
 .stButton button[kind="secondary"]:hover {{
@@ -533,6 +558,8 @@ label, .stTextInput label, .stNumberInput label,
     color: {ghost_hc} !important;
     transform: translateY(-1px) !important;
 }}
+
+/* ── Download button ── */
 .stDownloadButton button {{
     background: linear-gradient(135deg, {acc_s} 0%, {acc_sh} 100%) !important;
     border: none !important;
@@ -540,12 +567,12 @@ label, .stTextInput label, .stNumberInput label,
     color: #fff !important;
     font-family: '{fb}', sans-serif !important;
     font-weight: 600 !important;
-    box-shadow: 0 4px 16px {acc_s}44 !important;
+    box-shadow: 0 4px 20px {acc_s}55, inset 0 1px 0 rgba(255,255,255,0.2) !important;
     transition: all 0.2s ease !important;
 }}
 .stDownloadButton button:hover {{
     transform: translateY(-2px) !important;
-    box-shadow: 0 8px 28px {acc_s}66 !important;
+    box-shadow: 0 8px 32px {acc_s}77 !important;
 }}
 
 /* ── Misc ── */
@@ -554,7 +581,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 .stCaption, small {{ color: {t_sub} !important; font-size: 0.73rem !important; }}
 .stSpinner > div {{ border-top-color: {acc} !important; }}
 
-/* ── Sticky footer ── */
+/* ── Sticky footer — glass ── */
 .sticky-footer {{
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -565,8 +592,9 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     display: flex;
     align-items: center;
     gap: 16px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 -1px 0 {footer_b}, 0 -8px 32px rgba(0,0,0,0.15);
 }}
 .footer-sair-btn {{
     background: {ghost_bg};
@@ -580,6 +608,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     transition: all 0.18s;
     text-decoration: none;
     white-space: nowrap;
+    backdrop-filter: blur(10px);
 }}
 .footer-sair-btn:hover {{
     background: {ghost_hbg};
@@ -587,14 +616,18 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     color: {ghost_hc};
 }}
 
-/* ── Top bar ── */
+/* ── Top bar — glass ── */
 .top-bar {{
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 0 18px;
-    border-bottom: 1px solid {divider_c};
-    margin-bottom: 36px;
+    padding: 16px 24px 16px;
+    margin: 0 -3rem 32px;
+    background: {glass_bg};
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid {glass_border};
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.08);
 }}
 .top-bar-left {{ display: flex; align-items: center; gap: 12px; }}
 .top-bar-name {{
@@ -629,12 +662,17 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     color: {t_sub};
     margin: 0 0 40px;
 }}
+
+/* ── Contract cards — glass ── */
 .contract-card {{
-    background: {surface};
-    border: 1.5px solid {surf_b};
+    background: {glass_bg};
+    border: 1px solid {glass_border};
     border-radius: {r_c};
     padding: 36px 28px 28px;
     text-align: center;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.08);
     transition: border-color 0.22s, box-shadow 0.22s, transform 0.22s;
     position: relative;
     overflow: hidden;
@@ -642,14 +680,14 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 .contract-card::before {{
     content: '';
     position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, {acc}0a 0%, transparent 60%);
-    opacity: 0;
-    transition: opacity 0.22s;
-    border-radius: {r_c};
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
 }}
-.contract-card:hover {{ border-color:{acc}55; box-shadow:0 16px 48px {acc}18; transform:translateY(-5px); }}
-.contract-card:hover::before {{ opacity:1; }}
+.contract-card:hover {{
+    border-color: {acc}66;
+    box-shadow: 0 16px 48px {acc}22, 0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.12);
+    transform: translateY(-5px);
+}}
 .contract-card-icon {{ font-size:2.8rem; margin-bottom:16px; display:block; }}
 .contract-card-name {{
     font-family:'{fh}',sans-serif !important;
@@ -659,9 +697,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 .contract-card-desc {{ font-size:0.8rem; color:{t_sub} !important; margin:0; line-height:1.6; }}
 
 /* ── Wizard progress bar ── */
-.wizard-header {{
-    margin-bottom: 28px;
-}}
+.wizard-header {{ margin-bottom: 28px; }}
 .wizard-meta {{
     display: flex;
     align-items: baseline;
@@ -685,7 +721,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     white-space: nowrap;
 }}
 .progress-track {{
-    height: 4px;
+    height: 3px;
     background: {track_bg};
     border-radius: 99px;
     overflow: hidden;
@@ -696,6 +732,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     background: linear-gradient(90deg, {track_fill}, {acc_s});
     border-radius: 99px;
     transition: width 0.4s cubic-bezier(.22,.68,0,1.2);
+    box-shadow: 0 0 8px {track_fill}88;
 }}
 .step-list {{
     display: flex;
@@ -705,12 +742,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     scrollbar-width: none;
 }}
 .step-list::-webkit-scrollbar {{ display: none; }}
-.step-item {{
-    display: flex;
-    align-items: center;
-    gap: 0;
-    flex-shrink: 0;
-}}
+.step-item {{ display: flex; align-items: center; flex-shrink: 0; }}
 .step-btn {{
     display: flex;
     align-items: center;
@@ -721,17 +753,19 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 0.04em;
-    border: 1.5px solid {step_inactive_b};
+    border: 1px solid {step_inactive_b};
     background: {step_inactive_bg};
     color: {step_inactive_c};
     white-space: nowrap;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     transition: all 0.18s;
 }}
 .step-btn.active {{
     background: {step_active_bg};
     border-color: {step_active_b};
     color: {step_active_c};
-    box-shadow: 0 2px 10px {acc}22;
+    box-shadow: 0 2px 12px {acc}33;
 }}
 .step-btn.done {{
     background: {step_done_bg};
@@ -742,8 +776,7 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     display: inline-flex; align-items: center; justify-content: center;
     width: 18px; height: 18px;
     border-radius: 50%;
-    font-size: 0.65rem;
-    font-weight: 700;
+    font-size: 0.65rem; font-weight: 700;
     background: currentColor;
     color: transparent;
     flex-shrink: 0;
@@ -753,52 +786,39 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
     content: attr(data-n);
     position: absolute;
     color: {bg_from};
-    font-size: 0.62rem;
-    font-weight: 700;
+    font-size: 0.62rem; font-weight: 700;
 }}
 .step-num.done-num::after {{ content: '✓'; }}
 .step-connector {{
     width: 24px; height: 1.5px;
     background: {step_inactive_b};
-    flex-shrink: 0;
-    margin: 0 -2px;
+    flex-shrink: 0; margin: 0 -2px;
 }}
 .step-connector.done {{ background: {step_done_b}; }}
 
-/* ── Section title inside wizard step ── */
-.section-header {{
-    margin-bottom: 24px;
-}}
+/* ── Section header ── */
+.section-header {{ margin-bottom: 24px; }}
 .section-title {{
     font-family: '{fh}', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.1rem; font-weight: 700;
     color: {t_main};
     margin: 0 0 4px;
     letter-spacing: -0.01em;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex; align-items: center; gap: 10px;
 }}
 .section-icon-lg {{
     display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px;
-    background: {acc}18;
-    border: 1.5px solid {acc}30;
-    border-radius: 9px;
-    font-size: 1rem;
-    flex-shrink: 0;
-}}
-.section-desc {{
-    font-size: 0.8rem;
-    color: {t_sub};
-    margin: 0 0 0 42px;
+    width: 34px; height: 34px;
+    background: {glass_bg};
+    border: 1px solid {glass_border};
+    border-radius: 10px;
+    font-size: 1rem; flex-shrink: 0;
+    backdrop-filter: blur(10px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
 }}
 
 /* ── Breadcrumb ── */
-.breadcrumb {{
-    display: flex; align-items: center; gap: 8px; margin-bottom: 24px;
-}}
+.breadcrumb {{ display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }}
 .bc-root {{ font-size: 0.73rem; color: {t_sub}; }}
 .bc-sep  {{ font-size: 0.73rem; color: {t_sub}; opacity: 0.35; }}
 .bc-active {{ font-size: 0.73rem; font-weight: 600; color: {t_label}; }}
@@ -806,60 +826,66 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 /* ── Confirm voltar ── */
 .voltar-box {{
     background: rgba(251,191,36,0.08);
-    border: 1px solid rgba(251,191,36,0.25);
+    border: 1px solid rgba(251,191,36,0.22);
     border-radius: 10px;
     padding: 10px 14px;
     font-size: 0.8rem;
     color: {warn_c};
     margin-bottom: 8px;
+    backdrop-filter: blur(10px);
 }}
 
-/* ── Success ── */
+/* ── Success card — glass ── */
 .success-card {{
-    background: linear-gradient(135deg, {acc_s}12 0%, {acc_s}05 100%);
-    border: 1.5px solid {acc_s}40;
+    background: {glass_bg};
+    border: 1px solid {acc_s}44;
     border-radius: {r_c};
     padding: 48px 40px 40px;
     text-align: center;
     margin-bottom: 24px;
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.10);
 }}
 .success-card::before {{
     content:'';
     position:absolute;
-    top:0;left:0;right:0;
-    height:3px;
+    top:0;left:0;right:0;height:2px;
     background:linear-gradient(90deg,{acc_s},{acc});
     border-radius:{r_c} {r_c} 0 0;
+    opacity:0.9;
 }}
-.success-icon {{ font-size:3.2rem; display:block; margin-bottom:16px; }}
+.success-card::after {{
+    content:'';
+    position:absolute;
+    inset:0;
+    background: radial-gradient(ellipse at 50% 0%, {acc_s}12 0%, transparent 60%);
+    pointer-events:none;
+}}
+.success-icon {{ font-size:3.2rem; display:block; margin-bottom:16px; position:relative; z-index:1; }}
 .success-title {{
     font-family:'{fh}',sans-serif;
     font-size:1.5rem; font-weight:800;
     color:{t_main}; margin:0 0 6px;
     letter-spacing:-0.02em;
+    position:relative; z-index:1;
 }}
-.success-name {{ font-size:0.88rem; color:{acc_s}; font-weight:500; margin:0; }}
+.success-name {{ font-size:0.88rem; color:{acc_s}; font-weight:500; margin:0; position:relative; z-index:1; }}
 
 /* ── Error box ── */
 .err-box {{
     background:{err_bg};
     border:1px solid {err_b};
     border-radius:{r_c};
-    padding:14px 18px;
-    margin-top:14px;
+    padding:14px 18px; margin-top:14px;
+    backdrop-filter: blur(10px);
 }}
-.err-title {{
-    color:{err_c}; font-weight:600;
-    font-size:0.8rem; margin:0 0 8px;
-}}
-.err-list {{
-    color:{err_li}; font-size:0.78rem;
-    margin:0; padding-left:16px; line-height:1.9;
-}}
+.err-title {{ color:{err_c}; font-weight:600; font-size:0.8rem; margin:0 0 8px; }}
+.err-list {{ color:{err_li}; font-size:0.78rem; margin:0; padding-left:16px; line-height:1.9; }}
 
-/* ── Login ── */
+/* ── Login card — glass ── */
 .login-outer {{
     display:flex; flex-direction:column;
     align-items:center; justify-content:center;
@@ -867,12 +893,22 @@ hr {{ border-color: {divider_c} !important; margin: 0 !important; }}
 }}
 .login-logo {{ text-align:center; margin-bottom:28px; }}
 .login-card {{
-    background:{surface};
-    border:1.5px solid {surf_b};
-    border-radius:20px;
-    padding:36px 32px 28px;
-    width:100%;
-    backdrop-filter:blur(20px);
+    background: {glass_bg};
+    border: 1px solid {glass_border};
+    border-radius: 20px;
+    padding: 36px 32px 28px;
+    width: 100%;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.10);
+    position: relative;
+    overflow: hidden;
+}}
+.login-card::before {{
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
 }}
 .login-title {{
     font-family:'{fh}',sans-serif;
